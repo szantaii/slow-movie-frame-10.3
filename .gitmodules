@@ -1,0 +1,3 @@
+[submodule "vendor/IT8951-ePaper"]
+	path = vendor/IT8951-ePaper
+	url = https://github.com/szantaii/IT8951-ePaper.git
