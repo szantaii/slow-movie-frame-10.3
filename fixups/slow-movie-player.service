@@ -1,0 +1,16 @@
+[Unit]
+Description=Slow Movie Player
+
+[Service]
+Type=exec
+ExecStart=/opt/slow-movie-player/slow-movie-player.py
+ExecStopPost=/opt/slow-movie-player/slow-movie-player.py --clear
+TimeoutStopSec=30
+Restart=no
+RuntimeDirectory=slow-movie-player
+ConfigurationDirectory=slow-movie-player
+StandardOutput=journal+console
+StandardError=inherit
+
+[Install]
+WantedBy=multi-user.target
