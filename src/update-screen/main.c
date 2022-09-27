@@ -1,7 +1,7 @@
-#include "../vendor/IT8951-ePaper/Raspberry/lib/Config/DEV_Config.h"
-#include "../vendor/IT8951-ePaper/Raspberry/lib/e-Paper/EPD_IT8951.h"
-#include "../vendor/IT8951-ePaper/Raspberry/lib/GUI/GUI_Paint.h"
-#include "../vendor/IT8951-ePaper/Raspberry/lib/GUI/GUI_BMPfile.h"
+#include "../../vendor/IT8951-ePaper/Raspberry/lib/Config/DEV_Config.h"
+#include "../../vendor/IT8951-ePaper/Raspberry/lib/e-Paper/EPD_IT8951.h"
+#include "../../vendor/IT8951-ePaper/Raspberry/lib/GUI/GUI_Paint.h"
+#include "../../vendor/IT8951-ePaper/Raspberry/lib/GUI/GUI_BMPfile.h"
 
 #include <stdbool.h>
 #include <math.h>

@@ -5,8 +5,8 @@ CFLAGS = $(STD) -O3 $(WARN_O)
 D_CFLAGS = $(STD) -DDEBUG -g -O0 $(WARN_O)
 LFLAGS = -lbcm2835 -lm -lrt -lpthread
 
-LIB_DIR = ../vendor/IT8951-ePaper/Raspberry/lib
-BUILD_DIR = ../build
+LIB_DIR = ../../vendor/IT8951-ePaper/Raspberry/lib
+BUILD_DIR = ../../build
 
 OBJS = ${BUILD_DIR}/main.o        \
        ${BUILD_DIR}/DEV_Config.o  \
