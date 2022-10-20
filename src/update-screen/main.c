@@ -10,8 +10,7 @@
 
 void print_help(void);
 int display_bmp_image(
-    uint16_t width,
-    uint16_t height,
+    IT8951_Dev_Info device_info,
     uint32_t target_memory_address,
     const char *file_path);
 
@@ -124,11 +123,9 @@ int main(int argc, char *argv[])
 
     target_memory_address = device_info.Memory_Addr_L | (device_info.Memory_Addr_H << 16);
 
-    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
-
     if (display_image)
     {
-        if (display_bmp_image(device_info.Panel_W, device_info.Panel_H, target_memory_address, file_path) != 0)
+        if (display_bmp_image(device_info, target_memory_address, file_path) != 0)
         {
             fprintf(
                 stderr,
@@ -136,8 +133,14 @@ int main(int argc, char *argv[])
                 "Error during drawing BMP image onto screen",
                 file_path);
 
+            EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
+
             return 4;
         }
+    }
+    else
+    {
+        EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
     }
 
     EPD_IT8951_Sleep();
@@ -195,14 +198,13 @@ void print_help(void)
 }
 
 int display_bmp_image(
-    uint16_t width,
-    uint16_t height,
+    IT8951_Dev_Info device_info,
     uint32_t target_memory_address,
     const char *file_path)
 {
     const uint8_t bits_per_pixel = 8;
     uint8_t *image = NULL;
-    size_t image_size = (size_t)width * (size_t)height;
+    size_t image_size = (size_t)device_info.Panel_W * (size_t)device_info.Panel_H;
 
     if (file_path == NULL)
     {
@@ -222,7 +224,7 @@ int display_bmp_image(
         return -2;
     }
 
-    Paint_NewImage(image, width, height, 0, BLACK);
+    Paint_NewImage(image, device_info.Panel_W, device_info.Panel_H, 0, BLACK);
     Paint_SelectImage(image);
     Paint_SetRotate(ROTATE_0);
     Paint_SetMirroring(MIRROR_HORIZONTAL);
@@ -245,12 +247,14 @@ int display_bmp_image(
         return -3;
     }
 
+    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
+
     EPD_IT8951_8bp_Refresh(
         image,
         0,
         0,
-        width,
-        height,
+        device_info.Panel_W,
+        device_info.Panel_H,
         true,
         target_memory_address);
 
