@@ -21,7 +21,17 @@ class SlowMoviePlayer():
             start_time = time.monotonic()
 
             image = Image(self.__video_library.get_next_frame())
-            image.resize_with_padding(self.__config.display_horizontal_resolution, self.__config.display_vertical_resolution).save_to_bmp(self.__image_file_path)
+
+            # (image.resize_with_padding(self.__config.display_horizontal_resolution, self.__config.display_vertical_resolution)
+            #       .save_to_bmp(self.__image_file_path))
+
+            (image.resize_keeping_aspect_ratio(self.__config.display_horizontal_resolution, self.__config.display_vertical_resolution)
+                  .convert_to_grayscale()
+                  .apply_4bpp_floyd_steinberg_dithering()
+                  .add_padding(self.__config.display_horizontal_resolution, self.__config.display_vertical_resolution)
+                  .convert_to_bgr()
+                  .save_to_bmp(self.__image_file_path))
+
             subprocess.run(['/opt/slow-movie-player/update-screen', '-v', self.__config.vcom, '-f', self.__image_file_path])
 
             elapsed_time = time.monotonic() - start_time
