@@ -10,29 +10,30 @@ import subprocess
 import argparse
 
 
-class SlowMoviePlayer():
-    def __init__(self, config: Configuration, runtime_directory: str) -> None:
+class SlowMoviePlayer:
+    def __init__(self, config: Configuration) -> None:
         self.__config = config
         self.__video_library = VideoLibrary(self.__config.video_directory)
-        self.__image_file_path = os.path.join(runtime_directory, 'frame.bmp')
 
     def run(self) -> None:
+        image_file_name = 'frame.bmp'
+
         while True:
             start_time = time.monotonic()
 
             image = Image(self.__video_library.get_next_frame())
 
             # (image.resize_with_padding(self.__config.screen_width, self.__config.screen_height)
-            #       .save_to_bmp(self.__image_file_path))
+            #       .save_to_bmp(image_file_name))
 
             (image.resize_keeping_aspect_ratio(self.__config.screen_width, self.__config.screen_height)
                   .convert_to_grayscale()
                   .apply_4bpp_floyd_steinberg_dithering()
                   .add_padding(self.__config.screen_width, self.__config.screen_height)
                   .convert_to_bgr()
-                  .save_to_bmp(self.__image_file_path))
+                  .save_to_bmp(image_file_name))
 
-            subprocess.run(['/opt/slow-movie-player/update-screen', '-v', str(self.__config.vcom), '-f', self.__image_file_path])
+            subprocess.run(['/opt/slow-movie-player/update-screen', '-v', str(self.__config.vcom), '-f', image_file_name])
 
             elapsed_time = time.monotonic() - start_time
 
@@ -53,6 +54,7 @@ if __name__ == '__main__':
 
         exit(0)
 
-    runtime_directory = os.getenv('RUNTIME_DIRECTORY', '/tmp')
+    working_directory = os.getenv('RUNTIME_DIRECTORY', '/tmp')
+    os.chdir(working_directory)
 
-    SlowMoviePlayer(config, runtime_directory).run()
+    SlowMoviePlayer(config).run()
