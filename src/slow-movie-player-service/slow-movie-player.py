@@ -3,10 +3,10 @@
 from videolibrary import VideoLibrary
 from image import Image
 from configuration import Configuration
+from display import Display
 
 import os
 import time
-import subprocess
 import argparse
 
 
@@ -32,7 +32,7 @@ class SlowMoviePlayer:
                   .convert_to_bgr()
                   .save_to_bmp(image_file_name))
 
-            subprocess.run(['/opt/slow-movie-player/update-screen', '-v', str(self.__config.vcom), '-f', image_file_name])
+            Display.draw_image(self.__config.vcom, image_file_name)
 
             elapsed_time = time.monotonic() - start_time
 
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     config = Configuration(config_directory)
 
     if args.clear_screen:
-        subprocess.run(['/opt/slow-movie-player/update-screen', '-v', str(config.vcom)])
+        Display.clear(config.vcom)
 
         exit(0)
 
