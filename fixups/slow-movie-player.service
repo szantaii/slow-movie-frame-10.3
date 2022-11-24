@@ -3,6 +3,8 @@ Description=Slow Movie Player
 
 [Service]
 Type=exec
+ExecStartPre=/opt/slow-movie-player/slow-movie-player.py --clear
+ExecStartPre=sleep 60
 ExecStart=/opt/slow-movie-player/slow-movie-player.py
 ExecStopPost=/opt/slow-movie-player/slow-movie-player.py --clear
 TimeoutStopSec=30
