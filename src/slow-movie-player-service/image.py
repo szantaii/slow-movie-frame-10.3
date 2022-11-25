@@ -118,6 +118,43 @@ class Image():
         cv2.imwrite(file_path, self.__image)
 
     def save_to_custom_4bpp_image(self, file_path: str) -> None:
+        """
+        Save image into a four bits per pixel format
+
+        The image format is the following:
+
+            +-------------------------------------------------------------+
+            | 2 bytes encoding the image width in pixels (little endian)  |
+            +-------------------------------------------------------------+
+            | 2 bytes encoding the image height in pixels (little endian) |
+            +-------------------------------------------------------------+
+            | image data: Each following byte encodes two pixels of the   |
+            |             image. The upper four bits encode the first     |
+            |             pixel, the lower four bits the next pixel and   |
+            |             so on. Pixels are encoded from top to bottom    |
+            |             row by row, from right to left.                 |
+            +-------------------------------------------------------------+
+
+            0        1        2        3        4        (width * height) / 2 + 3
+            +--------+--------+--------+--------+- . . . +--------+
+            |        |        |        |        |        |        |
+            +--------+--------+--------+--------+- . . . +--------+
+            :                 :                 :
+            :   image width   :  image height   :
+            :     2 bytes     :     2 bytes     :
+            :  little endian  :  little endian  :
+            :                 :                 :
+
+        Notes:
+            * It is not required to have any image data at all.
+            * The minimum file size is 4 bytes.
+            * The maximum image resolution is 2^16 - 2 pixels by 2^16 - 1 pixels
+              or vice versa (resulting in a 2,147,385,349 bytes of maximum file size).
+            * The number of pixels in the image must be even: (width * height) mod 2 == 0.
+            * The last index of the last byte (the last two pixels if image has data)
+              is (width * height) / 2 + 3.
+        """
+
         if len(self.__image.shape) != 2:
             raise RuntimeError(
                 'Saving images to the custom 4 bits per pixel format can only work with images with a single color channel. '
@@ -125,13 +162,13 @@ class Image():
             )
 
         height, width = self.__image.shape[:2]
-
         max_resolution = 2**16 - 1
 
-        if width > max_resolution or height > max_resolution:
+        if not (width <= max_resolution and height < max_resolution
+                or width < max_resolution and height <= max_resolution):
             raise RuntimeError(
                 'Image resolution is too high! '
-                'Maximum image resolution is {0}x{0}.'.format(max_resolution)
+                'Maximum image resolution is {}x{} (or vice versa).'.format(max_resolution, max_resolution - 1)
             )
 
         pixel_count = width * height
@@ -143,17 +180,21 @@ class Image():
             )
 
         image_file_header = bytearray()
-        image_file_header.extend((width).to_bytes(length=2, byteorder='little'))
-        image_file_header.extend((height).to_bytes(length=2, byteorder='little'))
+        image_file_header.extend(width.to_bytes(length=2, byteorder='little'))
+        image_file_header.extend(height.to_bytes(length=2, byteorder='little'))
 
         image_file_data = bytearray()
         top_four_bits_mask = numpy.uint8(0b11110000)
         bottom_four_bits_mask = numpy.uint8(0b00001111)
-        flat_image = numpy.reshape(self.__image, pixel_count, order='F')
+        flat_image = numpy.reshape(
+            numpy.fliplr(self.__image),
+            pixel_count,
+            order='C'
+        )
 
         for i in range(0, pixel_count, 2):
             image_file_data.append(
-                ((flat_image[i] & top_four_bits_mask) | (flat_image[i + 1] & bottom_four_bits_mask)).tobytes()
+                (flat_image[i] & top_four_bits_mask) | (flat_image[i + 1] & bottom_four_bits_mask)
             )
 
         with open(file_path, 'wb') as image_file:
