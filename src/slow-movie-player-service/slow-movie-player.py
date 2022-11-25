@@ -27,7 +27,6 @@ class SlowMoviePlayer:
             #       .save_to_bmp(image_file_name))
 
             (image.resize_keeping_aspect_ratio(self.__config.screen_width, self.__config.screen_height)
-                  .convert_to_grayscale()
                   .apply_4bpp_floyd_steinberg_dithering()
                   .add_padding(self.__config.screen_width, self.__config.screen_height)
                   .convert_to_bgr()
