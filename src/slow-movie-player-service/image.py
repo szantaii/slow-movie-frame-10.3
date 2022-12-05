@@ -1,4 +1,5 @@
 from __future__ import annotations
+from grayscalemethod import GrayscaleMethod
 import cv2
 import numpy
 import subprocess
@@ -72,12 +73,16 @@ class Image():
 
         return self
 
-    def apply_4bpp_floyd_steinberg_dithering(self) -> Image:
+    def apply_4bpp_floyd_steinberg_dithering(
+        self,
+        grayscale_method: GrayscaleMethod = GrayscaleMethod.REC709LUMA
+    ) -> Image:
+
         imagemagick_command = [
             'convert',
             '-',
             '-grayscale',
-            'Rec601Luminance',
+            grayscale_method.value,
             '-dither',
             'FloydSteinberg',
             '-remap',

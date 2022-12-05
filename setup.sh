@@ -22,6 +22,7 @@ declare -a files=(
     "${script_dir}/fixups/${service_name}:/etc/systemd/system/${service_name}:root:root:0644"
     "${script_dir}/src/slow-movie-player-service/configuration.py:${target_main_dir}/configuration.py:root:root:0600"
     "${script_dir}/src/slow-movie-player-service/display.py:${target_main_dir}/display.py:root:root:0600"
+    "${script_dir}/src/slow-movie-player-service/grayscalemethod.py:${target_main_dir}/grayscalemethod.py:root:root:0600"
     "${script_dir}/src/slow-movie-player-service/image.py:${target_main_dir}/image.py:root:root:0600"
     "${script_dir}/src/slow-movie-player-service/slow-movie-player.py:${target_main_dir}/slow-movie-player.py:root:root:0700"
     "${script_dir}/src/slow-movie-player-service/video.py:${target_main_dir}/video.py:root:root:0600"
