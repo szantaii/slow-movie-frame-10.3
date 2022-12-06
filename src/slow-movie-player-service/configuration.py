@@ -1,3 +1,4 @@
+from grayscalemethod import GrayscaleMethod
 import configparser
 import os
 
@@ -22,6 +23,11 @@ class Configuration():
         self.screen_width = parser.getint(self.__class__.SECTION_NAME, 'screen_width')
         self.screen_height = parser.getint(self.__class__.SECTION_NAME, 'screen_height')
         self.refresh_timeout = parser.getfloat(self.__class__.SECTION_NAME, 'refresh_timeout')
+        self.grayscale_method = GrayscaleMethod(
+            self.__strip_enclosing_quotes(
+                parser.get(self.__class__.SECTION_NAME, 'grayscale_method')
+            )
+        )
         self.vcom = parser.getfloat(self.__class__.SECTION_NAME, 'vcom')
         self.video_directory = self.__strip_enclosing_quotes(
             parser.get(self.__class__.SECTION_NAME, 'video_directory')
