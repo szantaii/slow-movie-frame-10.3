@@ -1,5 +1,7 @@
 from video import Video
+from skip import FrameSkip, TimeSkip
 
+from typing import Union
 from collections import OrderedDict
 import json
 import numpy
@@ -92,7 +94,8 @@ class VideoLibrary:
 
     def __reset(self) -> None:
         for _, info in self.__playback_info.items():
-            info['current_frame'] = 0
+            info['next_frame'] = 0
+            info['next_timestamp'] = 0.0
 
         self.__save_to_file()
 
@@ -115,10 +118,13 @@ class VideoLibrary:
         for video_path in video_paths:
             if video_path not in self.__playback_info.keys():
                 video = Video(video_path)
+                frame_count, duration = video.get_stats()
                 self.__playback_info[video_path] = OrderedDict(
                     {
-                        'frame_count': video.get_frame_count(),
-                        'current_frame': 0
+                        'frame_count': frame_count,
+                        'duration': duration,
+                        'next_frame': 0,
+                        'next_timestamp': 0.0
                     }
                 )
 
@@ -130,20 +136,42 @@ class VideoLibrary:
                 continue
 
             video = Video(video_path)
-            frame_count = video.get_frame_count()
+            frame_count, duration = video.get_stats()
 
-            if self.__playback_info[video_path]['frame_count'] != frame_count:
+            if (self.__playback_info[video_path]['frame_count'] != frame_count
+                    or self.__playback_info[video_path]['duration'] != duration):
                 self.__playback_info[video_path]['frame_count'] = frame_count
-                self.__playback_info[video_path]['current_frame'] = 0
+                self.__playback_info[video_path]['duration'] = duration
+                self.__playback_info[video_path]['next_frame'] = 0
+                self.__playback_info[video_path]['next_timestamp'] = 0.0
 
-    def get_next_frame(self) -> numpy.ndarray:
+    def get_next_frame(self, skip: Union[FrameSkip, TimeSkip] = FrameSkip(1)) -> numpy.ndarray:
+        if not isinstance(skip, (FrameSkip, TimeSkip)):
+            raise TypeError(
+                "Argument 'skip' is of type '{}', but should be of type '{}' or '{}' instead.".format(
+                    type(skip),
+                    FrameSkip,
+                    TimeSkip
+                )
+            )
+
         last_video_path = next(reversed(self.__playback_info))
 
         for video_path, info in self.__playback_info.items():
-            if info['current_frame'] < info['frame_count']:
+            if (info['next_frame'] < info['frame_count']
+                    and info['next_timestamp'] < info['duration']):
                 video = Video(video_path)
-                frame = video.get_frame(info['current_frame'])
-                info['current_frame'] += 1
+                frame_rate = video.get_frame_rate()
+
+                if isinstance(skip, FrameSkip):
+                    frame = video.get_frame(info['next_frame'])
+                    info['next_frame'] += skip.amount
+                    info['next_timestamp'] = (info['next_frame'] / frame_rate) * 1000.0
+                else:
+                    frame = video.get_frame(info['next_timestamp'])
+                    info['next_timestamp'] += skip.amount
+                    info['next_frame'] = int((info['next_timestamp'] / 1000.0) * frame_rate)
+
                 self.__save_to_file()
 
                 return frame
@@ -151,4 +179,4 @@ class VideoLibrary:
             if video_path == last_video_path:
                 self.__reset()
 
-                return self.get_next_frame()
+                return self.get_next_frame(skip=skip)
