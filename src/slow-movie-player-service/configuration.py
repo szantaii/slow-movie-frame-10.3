@@ -1,9 +1,11 @@
+from skip import FrameSkip, TimeSkip
 from grayscalemethod import GrayscaleMethod
+
 import configparser
 import os
 
 
-class Configuration():
+class Configuration:
     SECTION_NAME = 'slow_movie_player'
 
     def __init__(self, config_directory: str) -> None:
@@ -20,15 +22,28 @@ class Configuration():
         parser.empty_lines_in_values = False
         parser.read_string(config_string)
 
+        self.vcom = parser.getfloat(self.__class__.SECTION_NAME, 'vcom')
+
         self.screen_width = parser.getint(self.__class__.SECTION_NAME, 'screen_width')
         self.screen_height = parser.getint(self.__class__.SECTION_NAME, 'screen_height')
+
         self.refresh_timeout = parser.getfloat(self.__class__.SECTION_NAME, 'refresh_timeout')
+
+        self.skip = FrameSkip(1)
+        frame_skip = parser.getint(self.__class__.SECTION_NAME, 'frame_skip', fallback=None)
+        time_skip = parser.getfloat(self.__class__.SECTION_NAME, 'time_skip', fallback=None)
+
+        if time_skip:
+            self.skip = TimeSkip(time_skip)
+        elif not time_skip and frame_skip:
+            self.skip = FrameSkip(frame_skip)
+
         self.grayscale_method = GrayscaleMethod(
             self.__strip_enclosing_quotes(
                 parser.get(self.__class__.SECTION_NAME, 'grayscale_method')
             )
         )
-        self.vcom = parser.getfloat(self.__class__.SECTION_NAME, 'vcom')
+
         self.video_directory = self.__strip_enclosing_quotes(
             parser.get(self.__class__.SECTION_NAME, 'video_directory')
         )
@@ -49,8 +64,8 @@ class Configuration():
 
         for quote_mark in quote_marks:
             if (len(string_value) > 1
-                and string_value.startswith(quote_mark)
-                and string_value.endswith(quote_mark)):
+                    and string_value.startswith(quote_mark)
+                    and string_value.endswith(quote_mark)):
 
                 return string_value[1:-1]
 

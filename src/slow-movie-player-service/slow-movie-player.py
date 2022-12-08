@@ -22,7 +22,7 @@ class SlowMoviePlayer:
         while True:
             start_time = time.monotonic()
 
-            image = Image(self.__video_library.get_next_frame())
+            image = Image(self.__video_library.get_next_frame(self.__config.skip))
 
             # (image.resize_with_padding(self.__config.screen_width, self.__config.screen_height)
             #       .save_to_bmp(image_file_name))
