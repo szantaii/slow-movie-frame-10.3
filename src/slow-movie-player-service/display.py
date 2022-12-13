@@ -4,7 +4,7 @@ import subprocess
 class Display:
     @staticmethod
     def __update(vcom: float, file_path: str = '') -> None:
-        command = ['/opt/slow-movie-player/update-screen', '-v', str(vcom)]
+        command = ['/opt/slow-movie-player/update-display', '-v', str(vcom)]
 
         if file_path:
             command += ['-f', file_path]

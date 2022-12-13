@@ -48,13 +48,13 @@ class SlowMoviePlayer:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--clear-screen', action='store_true')
+    parser.add_argument('--clear', action='store_true')
     args = parser.parse_args()
 
     config_directory = os.getenv('CONFIGURATION_DIRECTORY', '/etc/slow-movie-player')
     config = Configuration(config_directory)
 
-    if args.clear_screen:
+    if args.clear:
         Display.clear(config.vcom)
 
         exit(0)
