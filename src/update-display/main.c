@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
                 fprintf(
                     stderr,
                     "%s (%s).\n",
-                    "Error during drawing BMP image onto screen",
+                    "Error during drawing BMP image onto display",
                     file_path);
 
                 EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
                 fprintf(
                     stderr,
                     "%s (%s).\n",
-                    "Error during drawing 4bpp image onto screen",
+                    "Error during drawing 4bpp image onto display",
                     file_path);
 
                 EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
@@ -216,8 +216,8 @@ void print_help(void)
         "%s\n"
         "%s\n\n",
 
-        "Usage: update-screen -v VOLTAGE [-f <IMAGE_FILE> | -h]",
-        "Update the screen of the connected 10.3 e-paper device either",
+        "Usage: update-display -v VOLTAGE [-f <IMAGE_FILE> | -h]",
+        "Update the display of the connected 10.3 e-paper device either",
         "by clearing it or drawing a 8bit per channel RGB BMP or a custom",
         "4bits per pixel image on it.",
 
@@ -227,7 +227,7 @@ void print_help(void)
         "              printed circuit cable of the connected device.)",
 
         "Optional options:",
-        "  -f IMAGE_FILE  draw the specified image on the screen of the",
+        "  -f IMAGE_FILE  draw the specified image on the display of the",
         "                 connected e-paper device",
         "  -h             display this help and exit",
 
@@ -236,14 +236,14 @@ void print_help(void)
         "  1  wrong command-line arguments or command-line parsing error",
         "  2  failed to initialize bcm2835 device",
         "  3  the connected device is not a 10.3 inch e-paper device",
-        "  4  error during drawing BMP/4BPP image onto screen",
+        "  4  error during drawing BMP/4BPP image onto display",
         "  5  unsupported image file format",
 
         "Examples:",
-        "  ./update-screen -h",
-        "  ./update-screen -v -2.51",
-        "  ./update-screen -v -1.50 -f /path/to/image.bmp",
-        "  ./update-screen -v -1.48 -f /path/to/image.4bpp");
+        "  ./update-display -h",
+        "  ./update-display -v -2.51",
+        "  ./update-display -v -1.50 -f /path/to/image.bmp",
+        "  ./update-display -v -1.48 -f /path/to/image.4bpp");
 }
 
 int str_ends_with(const char *str, const char *substr)
@@ -381,7 +381,7 @@ int display_4bpp_image(
         fprintf(
             stderr,
             "%s (%s).\n",
-            "No image data in file, not drawing anything to screen",
+            "No image data in file, not drawing anything to display",
             file_path);
 
         return 0;

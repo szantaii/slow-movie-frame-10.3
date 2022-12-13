@@ -14,7 +14,7 @@ OBJS = ${BUILD_DIR}/main.o        \
        ${BUILD_DIR}/GUI_BMPfile.o \
        ${BUILD_DIR}/GUI_Paint.o
 
-TARGET = update-screen
+TARGET = update-display
 
 .PHONY: all clean debug
 
