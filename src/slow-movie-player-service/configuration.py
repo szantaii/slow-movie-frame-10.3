@@ -2,6 +2,7 @@ from skip import FrameSkip, TimeSkip
 from grayscalemethod import GrayscaleMethod
 
 import configparser
+import re
 import os
 
 
@@ -24,8 +25,17 @@ class Configuration:
 
         self.vcom = parser.getfloat(self.__class__.SECTION_NAME, 'vcom')
 
-        self.screen_width = parser.getint(self.__class__.SECTION_NAME, 'screen_width')
-        self.screen_height = parser.getint(self.__class__.SECTION_NAME, 'screen_height')
+        display_resolution_str = self.__strip_enclosing_quotes(
+            parser.get(self.__class__.SECTION_NAME, 'display_resolution')
+        )
+
+        match = re.fullmatch(r'(\d+)\s*[xX,;\s]\s*(\d+)', display_resolution_str)
+
+        if not match:
+            raise RuntimeError("Cannot parse setting for 'display_resolution'")
+
+        self.screen_width = int(match[1])
+        self.screen_height = int(match[2])
 
         self.refresh_timeout = parser.getfloat(self.__class__.SECTION_NAME, 'refresh_timeout')
 
