@@ -17,7 +17,7 @@ declare -a directories=(
 
 declare -a files=(
     # source_path:target_path:user:group:permissions
-    "${script_dir}/build/update-screen:${target_main_dir}/update-screen:root:root:0700"
+    "${script_dir}/build/update-display:${target_main_dir}/update-display:root:root:0700"
     "${script_dir}/fixups/default.conf:${target_config_dir}/default.conf:root:root:0644"
     "${script_dir}/fixups/${service_name}:/etc/systemd/system/${service_name}:root:root:0644"
     "${script_dir}/src/slow-movie-player-service/configuration.py:${target_main_dir}/configuration.py:root:root:0600"
