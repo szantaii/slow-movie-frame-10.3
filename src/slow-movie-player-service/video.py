@@ -21,14 +21,30 @@ class Video:
         return frame_count, duration
 
     def get_frame(self, position: Union[int, float]) -> numpy.ndarray:
+        if not isinstance(position, (int, float)):
+            raise TypeError(
+                "Argument 'position' must be of type '{}' or '{}', but '{}' was provided instead.".format(
+                    int,
+                    float,
+                    type(position)
+                )
+            )
+
+        if position < 0:
+            raise ValueError(
+                "Value of argument 'position' must be a non-negative number, but {} was provided instead.".format(
+                    position
+                )
+            )
+
         if isinstance(position, int):
             self.__video.set(cv2.CAP_PROP_POS_FRAMES, position)
-        elif isinstance(position, float):
+        else:
             self.__video.set(cv2.CAP_PROP_POS_MSEC, position)
 
         is_read, frame = self.__video.read()
 
         if not is_read:
-            frame = numpy.empty((0, 0, 3), dtype=numpy.uint8)
+            raise RuntimeError('Unable to read video frame.')
 
         return frame
