@@ -15,16 +15,23 @@ class AbstractSkip(abc.ABC):
 
     def __post_init__(self):
         for field_name, required_type in self.__annotations__.items():
-            provided_type = self.__dict__[field_name]
+            provided_value = self.__dict__[field_name]
 
-            if not isinstance(provided_type, required_type):
+            if not isinstance(provided_value, required_type):
                 raise TypeError(
                     "Field '{}' is of type '{}', but should be of type '{}' instead.".format(
                         field_name,
-                        type(provided_type),
+                        type(provided_value),
                         required_type
                     )
                 )
+
+        if self.amount <= 0:
+            raise ValueError(
+                "Field 'amount' must have a positive value, but value '{}' was provided.".format(
+                    self.amount
+                )
+            )
 
 
 @dataclasses.dataclass(frozen=True)
