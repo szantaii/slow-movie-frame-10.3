@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import grayscalemethod_test
 import skip_test
 import video_test
 import unittest
@@ -7,6 +8,7 @@ import unittest
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
     test_modules = [
+        grayscalemethod_test,
         skip_test,
         video_test,
     ]
