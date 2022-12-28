@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
 import skip_test
+import video_test
 import unittest
 
 if __name__ == '__main__':
     test_suite = unittest.TestSuite()
     test_modules = [
         skip_test,
+        video_test,
     ]
 
     for test_module in test_modules:
