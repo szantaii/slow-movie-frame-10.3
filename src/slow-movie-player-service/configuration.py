@@ -9,20 +9,17 @@ import math
 
 
 class Configuration:
+    CONFIGURATION_FILE_EXTENSION = '.conf'
     SECTION_NAME = 'slow_movie_player'
 
     def __init__(self, config_directory: str) -> None:
-        # Mandatory config entries
-        self.vcom : float = float('-inf')
-        self.screen_width : int = 0
-        self.screen_height : int  = 0
-        self.refresh_timeout : float = 0.0
-        self.video_directory : str = ''
-        # Optional config entries
-        self.skip : Union[FrameSkip, TimeSkip] = FrameSkip(1)
-        self.grayscale_method : GrayscaleMethod = GrayscaleMethod('')
+        self.vcom: float = float('-inf')
+        self.screen_width: int = 0
+        self.screen_height: int = 0
+        self.refresh_timeout: float = 0.0
+        self.video_directory: str = ''
+        self.skip: Union[FrameSkip, TimeSkip] = FrameSkip(1)
 
-        # Read config
         config_path = self.__get_first_config_file_path_from_directory(config_directory)
 
         with open(config_path, 'r') as config_file:
@@ -36,14 +33,12 @@ class Configuration:
         parser.empty_lines_in_values = False
         parser.read_string(config_string)
 
-        # VCOM (mandatory)
         self.vcom = parser.getfloat(self.__class__.SECTION_NAME, 'vcom')
 
         display_resolution_str = self.__strip_enclosing_quotes(
             parser.get(self.__class__.SECTION_NAME, 'display_resolution')
         )
 
-        # Display resolution (mandatory)
         match = re.fullmatch(r'(\d+)\s*[xX,;\s]\s*(\d+)', display_resolution_str)
 
         if not match:
@@ -52,15 +47,12 @@ class Configuration:
         self.screen_width = int(match[1])
         self.screen_height = int(match[2])
 
-        # Refresh timeout (mandatory)
         self.refresh_timeout = parser.getfloat(self.__class__.SECTION_NAME, 'refresh_timeout')
 
-        # Video directory (mandatory)
         self.video_directory = self.__strip_enclosing_quotes(
             parser.get(self.__class__.SECTION_NAME, 'video_directory')
         )
 
-        # Time/FrameSkip (optional)
         frame_skip = parser.getint(self.__class__.SECTION_NAME, 'frame_skip', fallback=None)
         time_skip = parser.getfloat(self.__class__.SECTION_NAME, 'time_skip', fallback=None)
 
@@ -69,10 +61,9 @@ class Configuration:
         elif not time_skip and frame_skip:
             self.skip = FrameSkip(frame_skip)
 
-        # Grayscale method (optional)
         self.grayscale_method = GrayscaleMethod(
             self.__strip_enclosing_quotes(
-                parser.get(self.__class__.SECTION_NAME, 'grayscale_method')
+                parser.get(self.__class__.SECTION_NAME, 'grayscale_method', fallback='')
             )
         )
 
@@ -83,15 +74,15 @@ class Configuration:
                 or not self.video_directory):
             raise RuntimeError('Invalid configuration')
 
-    @staticmethod
-    def __get_first_config_file_path_from_directory(config_directory: str) -> str:
+    @classmethod
+    def __get_first_config_file_path_from_directory(cls, config_directory: str) -> str:
         directory_entries = os.scandir(config_directory)
 
         for entry in directory_entries:
-            if entry.is_file() and entry.name.endswith('.conf'):
+            if entry.is_file() and entry.name.endswith(cls.CONFIGURATION_FILE_EXTENSION):
                 return os.path.join(config_directory, entry.name)
 
-        raise FileNotFoundError('No config file found in {}'.format(config_directory))
+        raise FileNotFoundError("No config file found in '{}'.".format(config_directory))
 
     @staticmethod
     def __strip_enclosing_quotes(string_value: str) -> str:
