@@ -7,6 +7,9 @@ from types import ModuleType
 def get_module_from_file(file_path: str) -> ModuleType:
     module_name = os.path.basename(os.path.splitext(file_path)[0])
 
+    if module_name in sys.modules:
+        return sys.modules[module_name]
+
     if os.path.isabs(file_path):
         spec = importlib.util.spec_from_file_location(module_name, file_path)
     else:
