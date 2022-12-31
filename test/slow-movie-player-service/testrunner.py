@@ -5,6 +5,7 @@ from unit import display_test as display_unit_test
 from unit import grayscalemethod_test as grayscalemethod_unit_test
 from unit import skip_test as skip_unit_test
 from unit import video_test as video_unit_test
+from functional import configuration_test as configuration_functional_test
 from types import ModuleType
 import unittest
 
@@ -39,7 +40,11 @@ if __name__ == '__main__':
         skip_unit_test,
         video_unit_test,
     ]
+    functional_test_modules = [
+        configuration_functional_test,
+    ]
 
     test_runner = TestRunner()
     test_runner.add_test_modules(unit_test_modules)
+    test_runner.add_test_modules(functional_test_modules)
     test_runner.run()
