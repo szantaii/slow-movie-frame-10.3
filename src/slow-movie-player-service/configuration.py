@@ -39,10 +39,10 @@ class Configuration:
             parser.get(self.__class__.SECTION_NAME, 'display_resolution')
         )
 
-        match = re.fullmatch(r'(\d+)\s*[xX,;\s]\s*(\d+)', display_resolution_str)
+        match = re.fullmatch(r'(\d+)[ \t]*[xX,; \t][ \t]*(\d+)', display_resolution_str)
 
         if not match:
-            raise RuntimeError("Cannot parse setting for 'display_resolution'")
+            raise ValueError("Cannot parse setting for 'display_resolution'.")
 
         self.screen_width = int(match[1])
         self.screen_height = int(match[2])
@@ -72,7 +72,7 @@ class Configuration:
                 or self.screen_height <= 0
                 or self.refresh_timeout < 0.0
                 or not self.video_directory):
-            raise RuntimeError('Invalid configuration')
+            raise ValueError('Configuration value out of permitted range.')
 
     @classmethod
     def __get_first_config_file_path_from_directory(cls, config_directory: str) -> str:
