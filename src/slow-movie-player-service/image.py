@@ -6,19 +6,24 @@ import subprocess
 import os
 
 
-class Image():
+class Image:
     BMP_FILE_EXTENSION = '.bmp'
     SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE = (
         'gray_palette.pgm',
         (
             'P2\n'
-            '1 16\n'
+            '16 1\n'
             '255\n'
             '0 17 34 51 68 85 102 119 136 153 170 187 204 221 238 255\n'
         )
     )
 
     def __init__(self, image: numpy.ndarray) -> None:
+        if image.dtype != numpy.uint8:
+            raise ValueError(
+                "Value of attribute 'dtype' of 'image' is not '{}'.".format(numpy.uint8)
+            )
+
         self.__image = image
 
         if not os.path.exists(self.__class__.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]):
@@ -27,8 +32,6 @@ class Image():
 
     def resize_keeping_aspect_ratio(self, max_width: int, max_height: int) -> Image:
         height, width = self.__image.shape[:2]
-        new_width = None
-        new_height = None
 
         if width / height <= max_width / max_height:
             new_width = int(width * (max_height / height))
@@ -113,7 +116,7 @@ class Image():
         return self
 
     def save_to_bmp(self, file_path: str) -> None:
-        if not file_path.lower().endswith(self.__class__.BMP_FILE_EXTENSION):
+        if not file_path.endswith(self.__class__.BMP_FILE_EXTENSION):
             raise ValueError(
                 "File name in argument 'file_path' must end in '{}' extension.".format(
                     self.__class__.BMP_FILE_EXTENSION
@@ -162,7 +165,8 @@ class Image():
 
         if len(self.__image.shape) != 2:
             raise RuntimeError(
-                'Saving images to the custom 4 bits per pixel format can only work with images with a single color channel. '
+                'Saving images to the custom 4 bits per pixel format can only work with '
+                'images with a single color channel. '
                 'You must reduce the number of color channels to one to use this function!'
             )
 
