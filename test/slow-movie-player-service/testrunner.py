@@ -8,6 +8,7 @@ from unit import skip_test as skip_unit_test
 from unit import video_test as video_unit_test
 from functional import configuration_test as configuration_functional_test
 from functional import image_test as image_functional_test
+from functional import videolibrary_test as videolibrary_functional_test
 from types import ModuleType
 import unittest
 
@@ -46,6 +47,7 @@ if __name__ == '__main__':
     functional_test_modules = [
         configuration_functional_test,
         image_functional_test,
+        videolibrary_functional_test,
     ]
 
     test_runner = TestRunner()
