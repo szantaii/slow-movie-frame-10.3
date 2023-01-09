@@ -1,10 +1,11 @@
 #include "mock.h"
+#include <assert.h>
 
-#define ABORT()                                                                   \
-    fprintf(stdout, "%s: Mock is not initialized for further use!\n", __func__ ); \
-    fprintf(stderr, "%s: Mock is not initialized for further use!\n", __func__ ); \
-    fflush(NULL);                                                                 \
-    abort();
+#define ABORT()                                                                                                \
+    fprintf(stdout, "%s:%d: %s: Mock is not initialized for (further) use!\n", __FILE__, __LINE__, __func__ ); \
+    fprintf(stderr, "%s:%d: %s: Mock is not initialized for (further) use!\n", __FILE__, __LINE__, __func__ ); \
+    fflush(NULL);                                                                                              \
+    assert(!"Mock is not initialized for (further) use!");
 
 uint8_t INIT_Mode = 0;
 uint8_t GC16_Mode = 0;
