@@ -22,15 +22,9 @@ class ImageTest(TestCase):
     def tearDown(self) -> None:
         os.chdir(self.original_working_directory)
 
-        image_16_color_palette_file_path = os.path.join(
-            self.test_directory_path,
-            image.Image.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]
-        )
-
         test_file_paths = [
-            image_16_color_palette_file_path,
             self.bmp_image_file_path,
-            self.four_bits_per_pixel_image_file_path
+            self.four_bits_per_pixel_image_file_path,
         ]
 
         for test_file_path in test_file_paths:
@@ -73,20 +67,6 @@ class ImageTest(TestCase):
                 )
 
                 self.assertFalse(os.path.exists(self.four_bits_per_pixel_image_file_path))
-
-    def test_palette_file_exists_after_instantiation(self) -> None:
-        image.Image(numpy.ndarray((0, 0, 3), dtype=numpy.uint8))
-
-        self.assertTrue(os.path.exists(image.Image.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]))
-        self.assertTrue(os.path.isfile(image.Image.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]))
-
-        with open(image.Image.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]) as palette_file:
-            palette_file_contents = palette_file.read()
-
-        self.assertEqual(
-            palette_file_contents,
-            image.Image.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[1]
-        )
 
     def test_resize_keeping_aspect_ratio(self) -> None:
         cases = [
@@ -303,43 +283,26 @@ class ImageTest(TestCase):
                 )
 
     def test_apply_4bpp_floyd_steinberg_dithering(self) -> None:
-        input_image = numpy.array(
-            [
-                [[141, 16, 27], [129, 16, 52], [76, 14, 134], [9, 32, 237]],
-                [[129, 17, 52], [76, 14, 134], [10, 32, 237], [5, 83, 246]],
-                [[76, 14, 134], [9, 32, 237], [5, 84, 246], [1, 131, 254]],
-                [[9, 32, 238], [4, 83, 247], [0, 131, 254], [28, 187, 247]]
-            ],
-            dtype=numpy.uint8
-        )
+        resolution = 256
+        input_image = numpy.zeros((resolution, resolution, 3), dtype=numpy.uint8)
+        input_image[:, :, 0] = numpy.linspace(0, 255, resolution)
+        input_image[:, :, 1] = numpy.linspace(0, 255, resolution).reshape(resolution, 1)
+        input_image[:, :, 2] = numpy.linspace(255, 0, resolution)
 
-        allowed_pixel_values = [
-            0x00,
-            0x11,
-            0x22,
-            0x33,
-            0x44,
-            0x55,
-            0x66,
-            0x77,
-            0x88,
-            0x99,
-            0xaa,
-            0xbb,
-            0xcc,
-            0xdd,
-            0xee,
-            0xff,
-        ]
+        allowed_pixel_values = {
+            0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff
+        }
 
         img = image.Image(input_image).apply_4bpp_floyd_steinberg_dithering()
 
-        self.assertEqual(len(self.get_image_shape(img)), 2)
+        self.assertTupleEqual(
+            self.get_image_shape(img),
+            (resolution, resolution)
+        )
 
         pixel_values = [j for i in self.get_image_data(img) for j in i]
 
-        for pixel_value in pixel_values:
-            self.assertIn(pixel_value, allowed_pixel_values)
+        self.assertTrue(set(pixel_values).issubset(allowed_pixel_values))
 
     def test_save_to_bmp_when_wrong_file_extension_provided(self) -> None:
         img = image.Image(numpy.ndarray((1, 1, 3), dtype=numpy.uint8))
