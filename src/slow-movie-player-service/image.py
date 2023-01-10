@@ -4,6 +4,7 @@ import cv2
 import numpy
 import subprocess
 import os
+import tempfile
 
 
 class Image:
@@ -25,10 +26,6 @@ class Image:
             )
 
         self.__image = image
-
-        if not os.path.exists(self.__class__.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]):
-            with open(self.__class__.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0], 'w') as palette_file:
-                palette_file.write(self.__class__.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[1])
 
     def resize_keeping_aspect_ratio(self, max_width: int, max_height: int) -> Image:
         height, width = self.__image.shape[:2]
@@ -81,6 +78,16 @@ class Image:
         grayscale_method: GrayscaleMethod = GrayscaleMethod.REC709LUMA
     ) -> Image:
 
+        grayscale_palette_file = tempfile.NamedTemporaryFile(
+            mode='w',
+            encoding='ascii',
+            suffix='.{}'.format(self.__class__.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]),
+            delete=False
+        )
+        grayscale_palette_file_path = grayscale_palette_file.name
+        grayscale_palette_file.write(self.__class__.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[1])
+        grayscale_palette_file.close()
+
         imagemagick_command = [
             'convert',
             '-',
@@ -89,7 +96,7 @@ class Image:
             '-dither',
             'FloydSteinberg',
             '-remap',
-            self.__class__.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0],
+            grayscale_palette_file_path,
             'pgm:-'
         ]
 
@@ -105,6 +112,8 @@ class Image:
             stderr=subprocess.PIPE
         )
         pgm_image, stderr = convert_process.communicate(input=ppm_image.tobytes())
+
+        os.remove(grayscale_palette_file_path)
 
         if convert_process.returncode != 0:
             raise RuntimeError("Failed to apply Floyd-Steinberg dithering: '{}'.".format(stderr))
