@@ -22,15 +22,9 @@ class ImageTest(TestCase):
     def tearDown(self) -> None:
         os.chdir(self.original_working_directory)
 
-        image_16_color_palette_file_path = os.path.join(
-            self.test_directory_path,
-            image.Image.SIXTEEN_COLOR_GRAYSCALE_PALETTE_IMAGE[0]
-        )
-
         test_file_paths = [
-            image_16_color_palette_file_path,
             self.bmp_image_file_path,
-            self.four_bits_per_pixel_image_file_path
+            self.four_bits_per_pixel_image_file_path,
         ]
 
         for test_file_path in test_file_paths:
