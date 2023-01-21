@@ -6,6 +6,7 @@ from unit import grayscalemethod_test as grayscalemethod_unit_test
 from unit import image_test as image_unit_test
 from unit import skip_test as skip_unit_test
 from unit import video_test as video_unit_test
+from unit import videolibrary_test as videolibrary_unit_test
 from functional import configuration_test as configuration_functional_test
 from functional import image_test as image_functional_test
 from functional import videolibrary_test as videolibrary_functional_test
@@ -43,6 +44,7 @@ if __name__ == '__main__':
         image_unit_test,
         skip_unit_test,
         video_unit_test,
+        videolibrary_unit_test,
     ]
     functional_test_modules = [
         configuration_functional_test,
