@@ -1,0 +1,6 @@
+[submodule "vendor/IT8951-ePaper"]
+	path = vendor/IT8951-ePaper
+	url = https://github.com/szantaii/IT8951-ePaper.git
+[submodule "vendor/easy-install-bcm2835"]
+	path = vendor/easy-install-bcm2835
+	url = https://github.com/szantaii/easy-install-bcm2835.git
