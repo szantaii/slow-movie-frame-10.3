@@ -4,6 +4,7 @@ from unit import configuration_test as configuration_unit_test
 from unit import display_test as display_unit_test
 from unit import grayscalemethod_test as grayscalemethod_unit_test
 from unit import image_test as image_unit_test
+from unit import processinfo_test as processinfo_unit_test
 from unit import skip_test as skip_unit_test
 from unit import video_test as video_unit_test
 from unit import videolibrary_test as videolibrary_unit_test
@@ -42,6 +43,7 @@ if __name__ == '__main__':
         display_unit_test,
         grayscalemethod_unit_test,
         image_unit_test,
+        processinfo_unit_test,
         skip_unit_test,
         video_unit_test,
         videolibrary_unit_test,
