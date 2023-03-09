@@ -28,9 +28,8 @@ class Configuration:
                 config_file.read()
             )
 
-        parser = configparser.ConfigParser()
+        parser = configparser.ConfigParser(empty_lines_in_values=False)
         parser.optionxform = lambda option: option
-        parser.empty_lines_in_values = False
         parser.read_string(config_string)
 
         self.vcom = parser.getfloat(self.__class__.SECTION_NAME, 'vcom')
