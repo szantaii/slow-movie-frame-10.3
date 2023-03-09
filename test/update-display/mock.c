@@ -1,6 +1,8 @@
 #include "mock.h"
 #include <assert.h>
 
+#define UNUSED(arg) (void)(arg)
+
 #define ABORT()                                                                                                \
     fprintf(stdout, "%s:%d: %s: Mock is not initialized for (further) use!\n", __FILE__, __LINE__, __func__ ); \
     fprintf(stderr, "%s:%d: %s: Mock is not initialized for (further) use!\n", __FILE__, __LINE__, __func__ ); \

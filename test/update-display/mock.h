@@ -8,10 +8,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#ifndef UNUSED
-#define UNUSED(x) (void)(x)
-#endif
-
 typedef enum fread_mock_read_value_type_t {
     UINT8_T_TYPE,
     UINT16_T_TYPE
