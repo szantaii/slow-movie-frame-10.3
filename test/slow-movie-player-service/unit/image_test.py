@@ -169,7 +169,7 @@ class ImageTest(TestCase):
         numpy_uint8_mock: Mock
     ) -> None:
 
-        cases = [
+        cases: list[dict[str, int]] = [
             {
                 'image_width': 2 ** 16 - 1,
                 'image_height': 2 ** 16 - 1,

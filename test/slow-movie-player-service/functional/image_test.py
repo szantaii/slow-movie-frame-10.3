@@ -3,7 +3,7 @@ from unittest import TestCase
 import numpy
 import tempfile
 import os
-from typing import List, Tuple, Union
+from typing import Any, Union
 
 image = get_module_from_file('../../src/slow-movie-player-service/image.py')
 
@@ -36,11 +36,11 @@ class ImageTest(TestCase):
         super().tearDown()
 
     @staticmethod
-    def get_image_data(img) -> Union[List[List[int]], List[List[List[int]]]]:
+    def get_image_data(img) -> Union[list[list[int]], list[list[list[int]]]]:
         return img._Image__image.tolist()
 
     @staticmethod
-    def get_image_shape(img) -> Tuple:
+    def get_image_shape(img) -> Union[tuple[int, int], tuple[int, int, int]]:
         return img._Image__image.shape
 
     def test_instantiation_with_wrong_input_array_data_types(self) -> None:
@@ -50,7 +50,7 @@ class ImageTest(TestCase):
             numpy.uintp,
             numpy.int8,
             numpy.int16,
-            'i4',  # numpy.int32
+            numpy.int32,
             numpy.float16,
             numpy.float32,
             numpy.float64,
@@ -69,7 +69,7 @@ class ImageTest(TestCase):
                 self.assertFalse(os.path.exists(self.four_bits_per_pixel_image_file_path))
 
     def test_resize_keeping_aspect_ratio(self) -> None:
-        cases = [
+        cases: list[dict[str, Any]] = [
             {
                 'description': 'Enlarge 4:3 image using same aspect ratio resolution',
                 'input_image_shape': (3, 4, 3),
@@ -171,7 +171,7 @@ class ImageTest(TestCase):
                 )
 
     def test_add_padding(self) -> None:
-        cases = [
+        cases: list[dict[str, Any]] = [
             {
                 'description': 'Add horizontal padding to image',
                 'input_image_data': [

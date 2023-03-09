@@ -5,7 +5,7 @@ import os
 import numpy
 import cv2
 import re
-from typing import Dict, Tuple
+from typing import Any
 
 video = get_module_from_file('../../src/slow-movie-player-service/video.py')
 skip = get_module_from_file('../../src/slow-movie-player-service/skip.py')
@@ -62,8 +62,8 @@ class VideoLibraryTest(TestCase):
         name: str,
         fps: int = 1,
         frame_count: int = 3,
-        size: Tuple[int, int] = (320, 240)
-    ) -> Dict:
+        size: tuple[int, int] = (320, 240)
+    ) -> dict[str, Any]:
 
         video_file_path = os.path.join(self.video_directory_path, name)
         vid = cv2.VideoWriter(video_file_path, 0, fps, size)
