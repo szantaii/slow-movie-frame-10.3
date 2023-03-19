@@ -12,14 +12,14 @@
 #include <math.h>
 
 extern uint8_t INIT_Mode;
-extern uint8_t GC16_Mode;
 
 void print_help(void)
 {
     fprintf(
         stdout,
 
-        "%s\n"
+        "%s\n\n"
+
         "%s\n"
         "%s\n"
         "%s\n\n"
@@ -32,50 +32,57 @@ void print_help(void)
         "%s\n"
         "%s\n"
         "%s\n"
-        "%s\n\n"
-
-        "%s\n"
-        "%s\n"
-        "%s\n"
-        "%s\n"
         "%s\n"
         "%s\n"
         "%s\n\n"
 
+        "%s\n"
+        "%s\n"
+        "%s\n"
+        "%s\n"
+        "%s\n"
+        "%s\n"
+        "%s\n\n"
+
+        "%s\n"
         "%s\n"
         "%s\n"
         "%s\n"
         "%s\n"
         "%s\n\n",
 
-        "Usage: update-display -v VOLTAGE [-f <IMAGE_FILE> | -h]",
+        "Usage: update-display -v VOLTAGE [-d | -f <IMAGE_FILE> | -h]",
+
         "Update the display of the connected 10.3 e-paper device either",
         "by clearing it or drawing a 8bit per channel RGB BMP or a custom",
         "4bits per pixel image on it.",
 
         "Mandatory option:",
-        "  -v VOLTAGE  use the VOLTAGE for the connected e-paper device",
+        "  -v VOLTAGE  Use the VOLTAGE for the connected e-paper device.",
         "              (Read and use the exact voltage from the flexible",
         "              printed circuit cable of the connected device.)",
 
         "Optional options:",
-        "  -f IMAGE_FILE  draw the specified image on the display of the",
-        "                 connected e-paper device",
-        "  -h             display this help and exit",
+        "  -d             Start in daemon mode. (This option only has an",
+        "                 effect when used together with '-f'.)",
+        "  -f IMAGE_FILE  Draw the specified image on the display of the",
+        "                 connected e-paper device.",
+        "  -h             Display this help and exit.",
 
         "Exit status:",
-        "  0  success",
-        "  1  wrong command-line arguments or command-line parsing error",
-        "  2  failed to initialize bcm2835 device",
-        "  3  the connected device is not a 10.3 inch e-paper device",
-        "  4  error during drawing BMP/4BPP image onto display",
-        "  5  unsupported image file format",
+        "  0  Success.",
+        "  1  Wrong command-line arguments or command-line parsing error.",
+        "  2  Failed to initialize bcm2835 device.",
+        "  3  The connected device is not a 10.3 inch e-paper device.",
+        "  4  Error during drawing BMP/4BPP image onto display.",
+        "  5  Unsupported image file format.",
 
         "Examples:",
         "  ./update-display -h",
         "  ./update-display -v -2.51",
         "  ./update-display -v -1.50 -f /path/to/image.bmp",
-        "  ./update-display -v -1.48 -f /path/to/image.4bpp");
+        "  ./update-display -v -1.48 -f /path/to/image.4bpp",
+        "  ./update-display -v -2.51 -d -f /path/to/image.bmp");
 }
 
 int str_ends_with(const char *str, const char *substr)
@@ -147,7 +154,7 @@ int display_bmp_image(
         return -3;
     }
 
-    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, GC16_Mode);
+    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
 
     EPD_IT8951_8bp_Refresh(
         image,
@@ -334,7 +341,7 @@ int display_4bpp_image(
 
     fclose(fp);
 
-    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, GC16_Mode);
+    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
     EPD_IT8951_4bp_Refresh(
         image_data,
         0,
