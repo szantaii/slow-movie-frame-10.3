@@ -10,7 +10,6 @@
     assert(!"Mock is not initialized for (further) use!");
 
 uint8_t INIT_Mode = 0;
-uint8_t GC16_Mode = 0;
 
 // fclose
 size_t fclose_mock_call_count = 0;
