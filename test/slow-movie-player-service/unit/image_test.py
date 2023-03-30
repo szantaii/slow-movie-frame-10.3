@@ -206,7 +206,7 @@ class ImageTest(TestCase):
                 input_image_mock.reset_mock()
 
                 expected_numpy_ndarray_mock_calls = [
-                     call().dtype.__ne__(numpy_uint8_mock),
+                    call().dtype.__ne__(numpy_uint8_mock),
                 ]
                 expected_input_image_mock_calls = [
                     call.dtype.__ne__(numpy_uint8_mock),

@@ -119,12 +119,12 @@ class VideoLibraryTest(TestCase):
         self.assertRaisesRegex(
             ValueError,
             (
-                    r"^"
-                    r"Cannot load video library from '{}'\. "
-                    r"It is recommended to check for backup \('.bak'\) and temporary \('.tmp'\) files in '{}' "
-                    r"for manually recovering video library data\. "
-                    r"See details for easier debugging: '.+'\."
-                    r"$"
+                r"^"
+                r"Cannot load video library from '{}'\. "
+                r"It is recommended to check for backup \('.bak'\) and temporary \('.tmp'\) files in '{}' "
+                r"for manually recovering video library data\. "
+                r"See details for easier debugging: '.+'\."
+                r"$"
             ).format(
                 re.escape(self.video_library_file_path),
                 re.escape(self.video_directory_path)
