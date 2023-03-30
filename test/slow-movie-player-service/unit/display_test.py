@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import call, Mock, patch
 import re
 import subprocess
+import signal
 from typing import Any
 
 processinfo = get_module_from_file('../../src/slow-movie-player-service/processinfo.py')
@@ -13,7 +14,6 @@ class DisplayTest(TestCase):
     TEST_VCOM_VALUE = -1.48
     TEST_PATH_TO_IMAGE_FILE = '/path/to/image/file'
 
-    @patch('display.ProcessInfo', spec=processinfo.ProcessInfo)
     @patch('subprocess.STDOUT')
     @patch('subprocess.PIPE')
     @patch('subprocess.Popen', spec=subprocess.Popen)
@@ -21,173 +21,607 @@ class DisplayTest(TestCase):
         self,
         popen_mock: Mock,
         stdout_mock: Mock,
-        stderr_mock: Mock,
-        process_info_mock: Mock
+        stderr_mock: Mock
     ) -> None:
-        self.do_test_with_mocks(
-            popen_mock,
-            stdout_mock,
-            stderr_mock,
-            process_info_mock,
-            popen_command=['/opt/slow-movie-player/update-display', '-v', str(self.__class__.TEST_VCOM_VALUE)],
-            process_timeout=None,
-            process_output='dummy output, does not really matter',
-            process_exit_status=0,
-            test_function=display.Display.clear,
-            test_function_args=[self.__class__.TEST_VCOM_VALUE]
+        popen_command = [
+            display.Display.UPDATE_DISPLAY_PATH,
+            '-v',
+            str(self.__class__.TEST_VCOM_VALUE)
+        ]
+
+        update_display_process_mock = popen_mock(
+            popen_command,
+            stdout=stdout_mock,
+            stderr=stderr_mock,
+            text=True
         )
+        update_display_process_mock.returncode = 0
+        update_display_process_mock.communicate.return_value = 'dummy output', None
 
-    @patch('display.ProcessInfo', spec=processinfo.ProcessInfo)
-    @patch('subprocess.STDOUT')
-    @patch('subprocess.PIPE')
-    @patch('subprocess.Popen', spec=subprocess.Popen)
-    def test_clear_with_non_zero_subprocess_exit_status(
-        self,
-        popen_mock: Mock,
-        stdout_mock: Mock,
-        stderr_mock: Mock,
-        process_info_mock: Mock
-    ) -> None:
-
-        self.do_test_with_mocks(
-            popen_mock,
-            stdout_mock,
-            stderr_mock,
-            process_info_mock,
-            popen_command=['/opt/slow-movie-player/update-display', '-v', str(self.__class__.TEST_VCOM_VALUE)],
-            process_timeout=None,
-            process_output='this should be included in the exception message',
-            process_exit_status=-1,
-            test_function=display.Display.clear,
-            test_function_args=[self.__class__.TEST_VCOM_VALUE]
-        )
-
-    @patch('display.ProcessInfo', spec=processinfo.ProcessInfo)
-    @patch('subprocess.STDOUT')
-    @patch('subprocess.PIPE')
-    @patch('subprocess.Popen', spec=subprocess.Popen)
-    def test_draw_image(
-        self,
-        popen_mock: Mock,
-        stdout_mock: Mock,
-        stderr_mock: Mock,
-        process_info_mock: Mock
-    ) -> None:
-        self.do_test_with_mocks(
-            popen_mock,
-            stdout_mock,
-            stderr_mock,
-            process_info_mock,
-            popen_command=[
-                '/opt/slow-movie-player/update-display',
-                '-v',
-                str(self.__class__.TEST_VCOM_VALUE),
-                '-f',
-                self.__class__.TEST_PATH_TO_IMAGE_FILE
-            ],
-            process_output=None,
-            process_timeout=60,
-            process_exit_status=0,
-            test_function=display.Display.draw_image,
-            test_function_args=[
-                self.__class__.TEST_VCOM_VALUE,
-                self.__class__.TEST_PATH_TO_IMAGE_FILE
-            ]
-        )
-
-    @patch('display.ProcessInfo', spec=processinfo.ProcessInfo)
-    @patch('subprocess.STDOUT')
-    @patch('subprocess.PIPE')
-    @patch('subprocess.Popen', spec=subprocess.Popen)
-    def test_draw_image_with_non_zero_subprocess_exit_status(
-        self,
-        popen_mock: Mock,
-        stdout_mock: Mock,
-        stderr_mock: Mock,
-        process_info_mock: Mock
-    ) -> None:
-
-        self.do_test_with_mocks(
-            popen_mock,
-            stdout_mock,
-            stderr_mock,
-            process_info_mock,
-            popen_command=[
-                '/opt/slow-movie-player/update-display',
-                '-v',
-                str(self.__class__.TEST_VCOM_VALUE),
-                '-f',
-                self.__class__.TEST_PATH_TO_IMAGE_FILE
-            ],
-            process_timeout=60,
-            process_output='this is included in the expected exception message',
-            process_exit_status=1,
-            test_function=display.Display.draw_image,
-            test_function_args=[
-                self.__class__.TEST_VCOM_VALUE,
-                self.__class__.TEST_PATH_TO_IMAGE_FILE
-            ]
-        )
-
-    def do_test_with_mocks(
-        self,
-        popen_mock: Mock,
-        stdout_mock: Mock,
-        stderr_mock: Mock,
-        process_info_mock: Mock,
-        **kwargs
-    ) -> None:
-        process_mock = popen_mock(kwargs['popen_command'], stdout=stdout_mock, stderr=stderr_mock, text=True)
-        process_mock.communicate.return_value = kwargs['process_output'], None
-        process_mock.returncode = kwargs['process_exit_status']
         popen_mock.reset_mock()
-
-        expected_popen_mock_calls = [
-            call(kwargs['popen_command'], stdout=stdout_mock, stderr=stderr_mock, text=True),
-            call().communicate(timeout=kwargs['process_timeout']),
-        ]
-        expected_process_mock_calls = [
-            call.communicate(timeout=kwargs['process_timeout']),
-        ]
 
         self.assertListEqual(popen_mock.mock_calls, [])
         self.assertListEqual(stdout_mock.mock_calls, [])
         self.assertListEqual(stderr_mock.mock_calls, [])
-        self.assertListEqual(process_mock.mock_calls, [])
-        self.assertListEqual(process_info_mock.mock_calls, [])
+        self.assertListEqual(update_display_process_mock.mock_calls, [])
 
-        if process_mock.returncode == 0:
-            kwargs['test_function'](*kwargs['test_function_args'])
-        else:
-            self.assertRaisesRegex(
-                RuntimeError,
-                r"^Error during updating display \({}\): '{}'\.$".format(
-                    kwargs['process_exit_status'],
-                    re.escape(kwargs['process_output'])
-                ),
-                kwargs['test_function'],
-                *kwargs['test_function_args']
-            )
+        try:
+            display.Display.clear(self.__class__.TEST_VCOM_VALUE)
+        except Exception as exception:
+            self.fail('An exception was raised unexpectedly: {}'.format(exception))
 
-        self.assertListEqual(popen_mock.mock_calls, expected_popen_mock_calls)
+        self.assertListEqual(
+            popen_mock.mock_calls,
+            [
+                call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                call().communicate(timeout=display.Display.TIMEOUT),
+            ]
+        )
         self.assertListEqual(stdout_mock.mock_calls, [])
         self.assertListEqual(stderr_mock.mock_calls, [])
-        self.assertListEqual(process_mock.mock_calls, expected_process_mock_calls)
-        self.assertListEqual(process_info_mock.mock_calls, [])
+        self.assertListEqual(
+            update_display_process_mock.mock_calls,
+            [
+                call.communicate(timeout=display.Display.TIMEOUT),
+            ]
+        )
 
-    @patch('display.ProcessInfo', spec=processinfo.ProcessInfo)
     @patch('subprocess.STDOUT')
     @patch('subprocess.PIPE')
     @patch('subprocess.Popen', spec=subprocess.Popen)
-    def test_draw_image_with_timeout_exception(
+    def test_clear_with_non_zero_exit_status(
+        self,
+        popen_mock: Mock,
+        stdout_mock: Mock,
+        stderr_mock: Mock
+    ) -> None:
+        popen_command = [
+            display.Display.UPDATE_DISPLAY_PATH,
+            '-v',
+            str(self.__class__.TEST_VCOM_VALUE)
+        ]
+
+        cases: list[dict[str, Any]] = [
+            {
+                'description': 'No process output',
+                'update_display_process_output': '',
+                'update_display_process_exit_status': 999,
+                'expected_exception_message_regex': r"^Error during updating display \(999\)\.$",
+            },
+            {
+                'description': 'With output',
+                'update_display_process_output': 'dummy process output',
+                'update_display_process_exit_status': -2,
+                'expected_exception_message_regex': r"^Error during updating display \(-2\): 'dummy process output'\.$",
+            },
+        ]
+
+        for case in cases:
+            with self.subTest(case['description']):
+
+                update_display_process_mock = popen_mock(
+                    popen_command,
+                    stdout=stdout_mock,
+                    stderr=stderr_mock,
+                    text=True
+                )
+                update_display_process_mock.returncode = case['update_display_process_exit_status']
+                update_display_process_mock.communicate.return_value = case['update_display_process_output'], None
+
+                popen_mock.reset_mock()
+
+                self.assertListEqual(popen_mock.mock_calls, [])
+                self.assertListEqual(stdout_mock.mock_calls, [])
+                self.assertListEqual(stderr_mock.mock_calls, [])
+                self.assertListEqual(update_display_process_mock.mock_calls, [])
+
+                self.assertRaisesRegex(
+                    RuntimeError,
+                    case['expected_exception_message_regex'],
+                    display.Display.clear,
+                    self.__class__.TEST_VCOM_VALUE
+                )
+
+                self.assertListEqual(
+                    popen_mock.mock_calls,
+                    [
+                        call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                        call().communicate(timeout=display.Display.TIMEOUT),
+                    ]
+                )
+                self.assertListEqual(stdout_mock.mock_calls, [])
+                self.assertListEqual(stderr_mock.mock_calls, [])
+                self.assertListEqual(
+                    update_display_process_mock.mock_calls,
+                    [
+                        call.communicate(timeout=display.Display.TIMEOUT),
+                    ]
+                )
+
+    @patch('processinfo.ProcessInfo.get_process_info', spec=processinfo.ProcessInfo.get_process_info)
+    @patch('subprocess.STDOUT')
+    @patch('subprocess.PIPE')
+    @patch('subprocess.Popen', spec=subprocess.Popen)
+    def test_clear_with_process_timeout(
         self,
         popen_mock: Mock,
         stdout_mock: Mock,
         stderr_mock: Mock,
-        process_info_mock: Mock
+        get_process_info_function_mock: Mock
     ) -> None:
         popen_command = [
-            '/opt/slow-movie-player/update-display',
+            display.Display.UPDATE_DISPLAY_PATH,
+            '-v',
+            str(self.__class__.TEST_VCOM_VALUE)
+        ]
+        update_display_process_output = 'dummy process output'
+        update_display_process_mock = popen_mock(
+            popen_command,
+            stdout=stdout_mock,
+            stderr=stderr_mock,
+            text=True
+        )
+        process_info_output = 'dummy process info output'
+        get_process_info_function_mock.return_value = process_info_output
+
+        cases: list[dict[str, Any]] = [
+            {
+                'description': 'No process output',
+                'update_display_process_output': None,
+                'expected_exception_message_regex': (
+                    r"^Timeout during updating display\.\n"
+                    r"Process info:\n"
+                    r"{}$".format(re.escape(process_info_output))
+                ),
+            },
+            {
+                'description': 'With output',
+                'update_display_process_output': update_display_process_output,
+                'expected_exception_message_regex': (
+                    r"^Timeout during updating display\.\n"
+                    r"Process output: '{}'.\n"
+                    r"Process info:\n"
+                    r"{}$"
+                ).format(
+                    re.escape(update_display_process_output),
+                    re.escape(process_info_output)
+                ),
+            }
+        ]
+
+        for case in cases:
+            with self.subTest(case['description']):
+                update_display_process_mock.communicate.side_effect = [
+                    subprocess.TimeoutExpired(
+                        popen_command,
+                        display.Display.TIMEOUT,
+                        case['update_display_process_output']
+                    ),
+                    (case['update_display_process_output'], None)
+                ]
+
+                popen_mock.reset_mock()
+                update_display_process_mock.reset_mock()
+                get_process_info_function_mock.reset_mock()
+
+                self.assertListEqual(popen_mock.mock_calls, [])
+                self.assertListEqual(stdout_mock.mock_calls, [])
+                self.assertListEqual(stderr_mock.mock_calls, [])
+                self.assertListEqual(update_display_process_mock.mock_calls, [])
+                self.assertListEqual(get_process_info_function_mock.mock_calls, [])
+
+                self.assertRaisesRegex(
+                    RuntimeError,
+                    case['expected_exception_message_regex'],
+                    display.Display.clear,
+                    self.__class__.TEST_VCOM_VALUE
+                )
+
+                self.assertListEqual(
+                    popen_mock.mock_calls,
+                    [
+                        call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                        call().communicate(timeout=display.Display.TIMEOUT),
+                        call().kill(),
+                        call().communicate(),
+                    ]
+                )
+                self.assertListEqual(stdout_mock.mock_calls, [])
+                self.assertListEqual(stderr_mock.mock_calls, [])
+                self.assertListEqual(
+                    update_display_process_mock.mock_calls,
+                    [
+                        call.communicate(timeout=display.Display.TIMEOUT),
+                        call.kill(),
+                        call.communicate(),
+                    ]
+                )
+                self.assertListEqual(
+                    get_process_info_function_mock.mock_calls,
+                    [
+                        call(update_display_process_mock),
+                    ]
+                )
+
+    @patch('signal.SIGUSR1')
+    @patch('signal.SIGTERM')
+    @patch('signal.sigtimedwait', spec=signal.sigtimedwait)
+    @patch('signal.getsignal', spec=signal.getsignal)
+    @patch('signal.signal', spec=signal.signal)
+    @patch('subprocess.STDOUT')
+    @patch('subprocess.PIPE')
+    @patch('subprocess.Popen', spec=subprocess.Popen)
+    def test_update(
+        self,
+        popen_mock: Mock,
+        stdout_mock: Mock,
+        stderr_mock: Mock,
+        signal_function_mock: Mock,
+        getsignal_function_mock: Mock,
+        sigtimedwait_function_mock: Mock,
+        sigterm_mock: Mock,
+        sigusr1_mock: Mock
+    ) -> None:
+        popen_command = [
+            display.Display.UPDATE_DISPLAY_PATH,
+            '-d',
+            '-v',
+            str(self.__class__.TEST_VCOM_VALUE),
+            '-f',
+            self.__class__.TEST_PATH_TO_IMAGE_FILE
+        ]
+
+        update_display_process_mock = popen_mock(
+            popen_command,
+            stdout=stdout_mock,
+            stderr=stderr_mock,
+            text=True
+        )
+        update_display_process_mock.returncode = 0
+        update_display_process_mock.communicate.return_value = 'dummy output', None
+
+        popen_mock.reset_mock()
+
+        self.assertListEqual(popen_mock.mock_calls, [])
+        self.assertListEqual(stdout_mock.mock_calls, [])
+        self.assertListEqual(stderr_mock.mock_calls, [])
+        self.assertListEqual(signal_function_mock.mock_calls, [])
+        self.assertListEqual(getsignal_function_mock.mock_calls, [])
+        self.assertListEqual(sigtimedwait_function_mock.mock_calls, [])
+        self.assertListEqual(sigterm_mock.mock_calls, [])
+        self.assertListEqual(sigusr1_mock.mock_calls, [])
+        self.assertListEqual(update_display_process_mock.mock_calls, [])
+
+        with display.Display(self.__class__.TEST_VCOM_VALUE, self.__class__.TEST_PATH_TO_IMAGE_FILE) as dsp:
+            self.assertListEqual(popen_mock.mock_calls, [])
+            self.assertListEqual(stdout_mock.mock_calls, [])
+            self.assertListEqual(stderr_mock.mock_calls, [])
+            self.assertListEqual(signal_function_mock.mock_calls, [])
+            self.assertListEqual(
+                getsignal_function_mock.mock_calls,
+                [
+                    call(sigterm_mock),  # Save original SIGTERM signal handler in __init__
+                ]
+            )
+            self.assertListEqual(sigtimedwait_function_mock.mock_calls, [])
+            self.assertListEqual(sigterm_mock.mock_calls, [])
+            self.assertListEqual(sigusr1_mock.mock_calls, [])
+            self.assertListEqual(update_display_process_mock.mock_calls, [])
+
+            dsp.update()
+
+            self.assertListEqual(
+                popen_mock.mock_calls,
+                [
+                    call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),  # Start update-display
+                    call().send_signal(sigusr1_mock),  # Send SIGUSR1 to update-display to draw image on screen
+                ]
+            )
+            self.assertListEqual(stdout_mock.mock_calls, [])
+            self.assertListEqual(stderr_mock.mock_calls, [])
+            self.assertListEqual(
+                signal_function_mock.mock_calls,
+                [
+                    call(sigterm_mock, dsp._Display__sigterm_handler),  # Set SIGTERM handler function in __start
+                    call(sigusr1_mock, display.Display._Display__noop_signal_handler),  # Set SIGUSR1 handler function in __start
+                ]
+            )
+            self.assertListEqual(getsignal_function_mock.mock_calls, [call(sigterm_mock)])
+            self.assertListEqual(
+                sigtimedwait_function_mock.mock_calls,
+                [
+                    call([sigusr1_mock], display.Display.TIMEOUT),  # Wait for update-display to get ready
+                    call([sigusr1_mock], display.Display.TIMEOUT),  # Wait until image was drawn on display
+                ]
+            )
+            self.assertListEqual(sigterm_mock.mock_calls, [])
+            self.assertListEqual(sigusr1_mock.mock_calls, [])
+            self.assertListEqual(
+                update_display_process_mock.mock_calls,
+                [
+                    call.send_signal(sigusr1_mock),  # Send SIGUSR1 to update-display to draw image on screen
+                ]
+            )
+
+            dsp.update()
+
+            self.assertListEqual(
+                popen_mock.mock_calls,
+                [
+                    call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                    call().send_signal(sigusr1_mock),
+                    call().send_signal(sigusr1_mock),  # Send SIGUSR1 to update-display to draw image on screen again
+                ]
+            )
+            self.assertListEqual(stdout_mock.mock_calls, [])
+            self.assertListEqual(stderr_mock.mock_calls, [])
+            self.assertListEqual(
+                signal_function_mock.mock_calls,
+                [
+                    call(sigterm_mock, dsp._Display__sigterm_handler),
+                    call(sigusr1_mock, dsp._Display__noop_signal_handler),
+                ]
+            )
+            self.assertListEqual(
+                getsignal_function_mock.mock_calls,
+                [
+                    call(sigterm_mock),
+                ]
+            )
+            self.assertListEqual(
+                sigtimedwait_function_mock.mock_calls,
+                [
+                    call([sigusr1_mock], display.Display.TIMEOUT),
+                    call([sigusr1_mock], display.Display.TIMEOUT),
+                    call([sigusr1_mock], display.Display.TIMEOUT),  # Wait until image was drawn on display again
+                ]
+            )
+            self.assertListEqual(sigterm_mock.mock_calls, [])
+            self.assertListEqual(sigusr1_mock.mock_calls, [])
+            self.assertListEqual(
+                update_display_process_mock.mock_calls,
+                [
+                    call.send_signal(sigusr1_mock),
+                    call.send_signal(sigusr1_mock),  # Send SIGUSR1 to update-display to draw image on screen again
+                ]
+            )
+
+        self.assertListEqual(
+            popen_mock.mock_calls,
+            [
+                call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                call().send_signal(sigusr1_mock),
+                call().send_signal(sigusr1_mock),
+                call().send_signal(sigterm_mock),  # Send SIGTERM to update-display to stop
+                call().communicate(timeout=display.Display.TIMEOUT),  # Wait for update-display to stop, etc.
+            ]
+        )
+        self.assertListEqual(stdout_mock.mock_calls, [])
+        self.assertListEqual(stderr_mock.mock_calls, [])
+        self.assertListEqual(
+            signal_function_mock.mock_calls,
+            [
+                call(sigterm_mock, dsp._Display__sigterm_handler),
+                call(sigusr1_mock, dsp._Display__noop_signal_handler),
+            ]
+        )
+        self.assertListEqual(
+            getsignal_function_mock.mock_calls,
+            [
+                call(sigterm_mock),
+            ]
+        )
+        self.assertListEqual(
+            sigtimedwait_function_mock.mock_calls,
+            [
+                call([sigusr1_mock], display.Display.TIMEOUT),
+                call([sigusr1_mock], display.Display.TIMEOUT),
+                call([sigusr1_mock], display.Display.TIMEOUT),
+            ]
+        )
+        self.assertListEqual(sigterm_mock.mock_calls, [])
+        self.assertListEqual(sigusr1_mock.mock_calls, [])
+        self.assertListEqual(
+            update_display_process_mock.mock_calls,
+            [
+                call.send_signal(sigusr1_mock),
+                call.send_signal(sigusr1_mock),
+                call.send_signal(sigterm_mock),  # Send SIGTERM to update-display to stop
+                call.communicate(timeout=display.Display.TIMEOUT),  # Wait for update-display to stop, etc.
+            ]
+        )
+
+    @patch('signal.SIGUSR1')
+    @patch('signal.SIGTERM')
+    @patch('signal.raise_signal', spec=signal.raise_signal)
+    @patch('signal.sigtimedwait', spec=signal.sigtimedwait)
+    @patch('signal.getsignal', spec=signal.getsignal)
+    @patch('signal.signal', spec=signal.signal)
+    @patch('subprocess.STDOUT')
+    @patch('subprocess.PIPE')
+    @patch('subprocess.Popen', spec=subprocess.Popen)
+    def test_sigterm_handling(
+        self,
+        popen_mock: Mock,
+        stdout_mock: Mock,
+        stderr_mock: Mock,
+        signal_function_mock: Mock,
+        getsignal_function_mock: Mock,
+        sigtimedwait_function_mock: Mock,
+        raise_signal_function_mock: Mock,
+        sigterm_mock: Mock,
+        sigusr1_mock: Mock
+    ) -> None:
+
+        popen_command = [
+            display.Display.UPDATE_DISPLAY_PATH,
+            '-d',
+            '-v',
+            str(self.__class__.TEST_VCOM_VALUE),
+            '-f',
+            self.__class__.TEST_PATH_TO_IMAGE_FILE
+        ]
+
+        update_display_process_mock = popen_mock(
+            popen_command,
+            stdout=stdout_mock,
+            stderr=stderr_mock,
+            text=True
+        )
+        update_display_process_mock.returncode = 0
+        update_display_process_mock.communicate.return_value = None, None
+
+        original_sigterm_handler_mock = getsignal_function_mock(sigterm_mock)
+
+        popen_mock.reset_mock()
+        getsignal_function_mock.reset_mock()
+
+        self.assertListEqual(popen_mock.mock_calls, [])
+        self.assertListEqual(stdout_mock.mock_calls, [])
+        self.assertListEqual(stderr_mock.mock_calls, [])
+        self.assertListEqual(signal_function_mock.mock_calls, [])
+        self.assertListEqual(getsignal_function_mock.mock_calls, [])
+        self.assertListEqual(sigtimedwait_function_mock.mock_calls, [])
+        self.assertListEqual(raise_signal_function_mock.mock_calls, [])
+        self.assertListEqual(sigterm_mock.mock_calls, [])
+        self.assertListEqual(sigusr1_mock.mock_calls, [])
+        self.assertListEqual(update_display_process_mock.mock_calls, [])
+        self.assertListEqual(original_sigterm_handler_mock.mock_calls, [])
+
+        dsp = display.Display(self.__class__.TEST_VCOM_VALUE, self.__class__.TEST_PATH_TO_IMAGE_FILE)
+
+        self.assertListEqual(popen_mock.mock_calls, [])
+        self.assertListEqual(stdout_mock.mock_calls, [])
+        self.assertListEqual(stderr_mock.mock_calls, [])
+        self.assertListEqual(signal_function_mock.mock_calls, [])
+        self.assertListEqual(
+            getsignal_function_mock.mock_calls,
+            [
+                call(sigterm_mock),
+            ]
+        )
+        self.assertListEqual(sigtimedwait_function_mock.mock_calls, [])
+        self.assertListEqual(raise_signal_function_mock.mock_calls, [])
+        self.assertListEqual(sigterm_mock.mock_calls, [])
+        self.assertListEqual(sigusr1_mock.mock_calls, [])
+        self.assertListEqual(update_display_process_mock.mock_calls, [])
+        self.assertListEqual(original_sigterm_handler_mock.mock_calls, [])
+
+        dsp.update()
+
+        self.assertListEqual(
+            popen_mock.mock_calls,
+            [
+                call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                call().send_signal(sigusr1_mock),
+            ]
+        )
+        self.assertListEqual(stdout_mock.mock_calls, [])
+        self.assertListEqual(stderr_mock.mock_calls, [])
+        self.assertListEqual(
+            signal_function_mock.mock_calls,
+            [
+                call(sigterm_mock, dsp._Display__sigterm_handler),
+                call(sigusr1_mock, display.Display._Display__noop_signal_handler),
+            ]
+        )
+        self.assertListEqual(
+            getsignal_function_mock.mock_calls,
+            [
+                call(sigterm_mock),
+            ]
+        )
+        self.assertListEqual(
+            sigtimedwait_function_mock.mock_calls,
+            [
+                call([sigusr1_mock], display.Display.TIMEOUT),
+                call([sigusr1_mock], display.Display.TIMEOUT),
+            ]
+        )
+        self.assertListEqual(raise_signal_function_mock.mock_calls, [])
+        self.assertListEqual(sigterm_mock.mock_calls, [])
+        self.assertListEqual(sigusr1_mock.mock_calls, [])
+        self.assertListEqual(
+            update_display_process_mock.mock_calls,
+            [
+                call.send_signal(sigusr1_mock),
+            ]
+        )
+        self.assertListEqual(original_sigterm_handler_mock.mock_calls, [])
+
+        # Manually call Display's SIGTERM handler (not nice, but it gets the work done)
+        dsp._Display__sigterm_handler()
+
+        self.assertListEqual(
+            popen_mock.mock_calls,
+            [
+                call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                call().send_signal(sigusr1_mock),
+                call().send_signal(sigterm_mock),  # Send SIGTERM to update-display to stop
+                call().communicate(timeout=display.Display.TIMEOUT),  # Wait for update-display to stop, etc.
+            ]
+        )
+        self.assertListEqual(stdout_mock.mock_calls, [])
+        self.assertListEqual(stderr_mock.mock_calls, [])
+        self.assertListEqual(
+            signal_function_mock.mock_calls,
+            [
+                call(sigterm_mock, dsp._Display__sigterm_handler),
+                call(sigusr1_mock, display.Display._Display__noop_signal_handler),
+                call(sigterm_mock, original_sigterm_handler_mock),  # Reset back to the original SIGTERM handler after stopping update-display
+            ]
+        )
+        self.assertListEqual(
+            getsignal_function_mock.mock_calls,
+            [
+                call(sigterm_mock),
+            ]
+        )
+        self.assertListEqual(
+            sigtimedwait_function_mock.mock_calls,
+            [
+                call([sigusr1_mock], display.Display.TIMEOUT),
+                call([sigusr1_mock], display.Display.TIMEOUT),
+            ]
+        )
+        self.assertListEqual(
+            raise_signal_function_mock.mock_calls,
+            [
+                call(sigterm_mock),  # Raise SIGTERM to propagate shutdown for the rest
+            ]
+        )
+        self.assertListEqual(sigterm_mock.mock_calls, [])
+        self.assertListEqual(sigusr1_mock.mock_calls, [])
+        self.assertListEqual(
+            update_display_process_mock.mock_calls,
+            [
+                call.send_signal(sigusr1_mock),
+                call.send_signal(sigterm_mock),  # Send SIGTERM to update-display to stop
+                call.communicate(timeout=display.Display.TIMEOUT),  # Wait for update-display to stop, etc.
+            ]
+        )
+        self.assertListEqual(original_sigterm_handler_mock.mock_calls, [])
+
+    @patch('signal.sigtimedwait', spec=signal.sigtimedwait)
+    @patch('signal.getsignal', spec=signal.getsignal)
+    @patch('signal.signal', spec=signal.signal)
+    @patch('signal.SIGTERM')
+    @patch('signal.SIGUSR1')
+    @patch('subprocess.STDOUT')
+    @patch('subprocess.PIPE')
+    @patch('subprocess.Popen', spec=subprocess.Popen)
+    def test_update_with_non_zero_exit_status(
+        self,
+        popen_mock: Mock,
+        stdout_mock: Mock,
+        stderr_mock: Mock,
+        sigusr1_mock: Mock,
+        sigterm_mock: Mock,
+        *_: Mock
+    ) -> None:
+        popen_command = [
+            display.Display.UPDATE_DISPLAY_PATH,
+            '-d',
             '-v',
             str(self.__class__.TEST_VCOM_VALUE),
             '-f',
@@ -196,121 +630,237 @@ class DisplayTest(TestCase):
 
         cases: list[dict[str, Any]] = [
             {
-                'description': 'Timeout expired #1',
-                'process_exit_status': 0,
-                'process_output': 'dummy output',
-                'process_status': 'dummy process status',
-                'stack_trace': 'dummy stack trace',
-                'kernel_trace': 'dummy kernel trace',
+                'description': 'No process output',
+                'update_display_process_output': None,
+                'update_display_process_exit_status': 1,
+                'expected_exception_message': 'Error during updating display (1).',
             },
             {
-                'description': 'Timeout expired #2',
-                'process_exit_status': -1,
-                'process_output': None,
-                'process_status': 'dummy process status\n',
-                'stack_trace': 'dummy stack trace\n',
-                'kernel_trace': None,
-            },
-            {
-                'description': 'Timeout expired #3',
-                'process_exit_status': 111,
-                'process_output': None,
-                'process_status': 'dummy process status\n',
-                'stack_trace': 'dummy stack trace',
-                'kernel_trace': None,
-            },
-            {
-                'description': 'Timeout expired #4',
-                'process_exit_status': 222,
-                'process_output': 'some dummy output here\n\n\n',
-                'process_status': 'something...something',
-                'stack_trace': 'nothing to see here',
-                'kernel_trace': None,
-            },
-            {
-                'description': 'Timeout expired #5',
-                'process_exit_status': -273.15,
-                'process_output': None,
-                'process_status': 'Hello,',
-                'stack_trace': 'World!',
-                'kernel_trace': 'nothing to see here either...\n',
+                'description': 'With output',
+                'update_display_process_output': 'dummy process output',
+                'update_display_process_exit_status': -1,
+                'expected_exception_message': "Error during updating display (-1): 'dummy process output'.",
             },
         ]
 
         for case in cases:
             with self.subTest(case['description']):
-                process_mock = popen_mock(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True)
-                process_mock.returncode = case['process_exit_status']
-                process_mock.communicate.return_value = case['process_output'], None
-                process_mock.communicate.side_effect = [
-                    subprocess.TimeoutExpired(popen_command, 60.0, case['process_output']),
-                    (case['process_output'], None)
-                ]
-                process_mock.pid = 111
-
-                process_info_mock.get_status.return_value = case['process_status']
-                process_info_mock.get_stack_trace.return_value = case['stack_trace']
-                process_info_mock.get_kernel_trace.return_value = case['kernel_trace']
+                update_display_process_mock = popen_mock(
+                    popen_command,
+                    stdout=stdout_mock,
+                    stderr=stderr_mock,
+                    text=True
+                )
+                update_display_process_mock.returncode = case['update_display_process_exit_status']
+                update_display_process_mock.communicate.return_value = case['update_display_process_output'], None
 
                 popen_mock.reset_mock()
-                process_info_mock.reset_mock()
-
-                expected_popen_mock_calls = [
-                    call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
-                    call().communicate(timeout=60),
-                    call().kill(),
-                    call().communicate(),
-                ]
-                expected_process_mock_calls = [
-                    call.communicate(timeout=60),
-                    call.kill(),
-                    call.communicate(),
-                ]
-                expected_process_info_mock_calls = [
-                    call.get_status(process_mock.pid),
-                    call.get_kernel_trace(process_mock.pid),
-                    call.get_stack_trace(process_mock.pid),
-                ]
 
                 self.assertListEqual(popen_mock.mock_calls, [])
                 self.assertListEqual(stdout_mock.mock_calls, [])
                 self.assertListEqual(stderr_mock.mock_calls, [])
-                self.assertListEqual(process_mock.mock_calls, [])
+                self.assertListEqual(update_display_process_mock.mock_calls, [])
 
-                self.assertRaisesRegex(
-                    RuntimeError,
-                    (
-                        r"^Timeout during updating display\.\n"
-                        r"--- Process status:\n{process_status}\n"
-                        r"--- Stack trace:\n{stack_trace}"
-                        r"{new_line}"
-                        r"{kernel_trace}"
-                        r"{process_output}"
-                        r"$"
-                    ).format(
-                        process_status=re.escape(case['process_status'].rstrip('\n')),
-                        stack_trace=re.escape(case['stack_trace'].rstrip('\n')),
-                        new_line=(
-                            '\n' if case['kernel_trace'] or case['process_output'] else ''
-                        ),
-                        kernel_trace=(
-                            r"--- Kernel trace:\n{}\n".format(
-                                re.escape(case['kernel_trace'].rstrip('\n'))
-                            ) if case['kernel_trace'] else ''
-                        ),
-                        process_output=(
-                            r"--- Output:\n{}".format(
-                                re.escape(case['process_output'])
-                            ) if case['process_output'] else ''
+                try:
+                    with display.Display(self.__class__.TEST_VCOM_VALUE, self.__class__.TEST_PATH_TO_IMAGE_FILE) as dsp:
+
+                        self.assertListEqual(popen_mock.mock_calls, [])
+                        self.assertListEqual(stdout_mock.mock_calls, [])
+                        self.assertListEqual(stderr_mock.mock_calls, [])
+                        self.assertListEqual(update_display_process_mock.mock_calls, [])
+
+                        dsp.update()
+
+                        self.assertListEqual(
+                            popen_mock.mock_calls,
+                            [
+                                call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                                call().send_signal(sigusr1_mock),
+                            ]
                         )
-                    ),
-                    display.Display.draw_image,
-                    self.__class__.TEST_VCOM_VALUE,
-                    self.__class__.TEST_PATH_TO_IMAGE_FILE
-                )
+                        self.assertListEqual(stdout_mock.mock_calls, [])
+                        self.assertListEqual(stderr_mock.mock_calls, [])
+                        self.assertListEqual(
+                            update_display_process_mock.mock_calls,
+                            [
+                                call.send_signal(sigusr1_mock),
+                            ]
+                        )
 
-                self.assertListEqual(popen_mock.mock_calls, expected_popen_mock_calls)
+                except RuntimeError as error:
+                    self.assertEqual(
+                        case['expected_exception_message'],
+                        str(error)
+                    )
+
+                    self.assertListEqual(
+                        popen_mock.mock_calls,
+                        [
+                            call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                            call().send_signal(sigusr1_mock),
+                            call().send_signal(sigterm_mock),
+                            call().communicate(timeout=display.Display.TIMEOUT),
+                        ]
+                    )
+                    self.assertListEqual(stdout_mock.mock_calls, [])
+                    self.assertListEqual(stderr_mock.mock_calls, [])
+                    self.assertListEqual(
+                        update_display_process_mock.mock_calls,
+                        [
+                            call.send_signal(sigusr1_mock),
+                            call.send_signal(sigterm_mock),
+                            call.communicate(timeout=display.Display.TIMEOUT),
+                        ]
+                    )
+
+                    continue
+
+                self.fail('The expected exception was not raised.')
+
+    @patch('signal.sigtimedwait', spec=signal.sigtimedwait)
+    @patch('signal.getsignal', spec=signal.getsignal)
+    @patch('signal.signal', spec=signal.signal)
+    @patch('signal.SIGTERM')
+    @patch('signal.SIGUSR1')
+    @patch('processinfo.ProcessInfo.get_process_info', spec=processinfo.ProcessInfo.get_process_info)
+    @patch('subprocess.STDOUT')
+    @patch('subprocess.PIPE')
+    @patch('subprocess.Popen', spec=subprocess.Popen)
+    def test_update_with_process_timeout(
+        self,
+        popen_mock: Mock,
+        stdout_mock: Mock,
+        stderr_mock: Mock,
+        get_process_info_function_mock: Mock,
+        sigusr1_mock: Mock,
+        sigterm_mock: Mock,
+        *_: Mock
+    ) -> None:
+        popen_command = [
+            display.Display.UPDATE_DISPLAY_PATH,
+            '-d',
+            '-v',
+            str(self.__class__.TEST_VCOM_VALUE),
+            '-f',
+            self.__class__.TEST_PATH_TO_IMAGE_FILE
+        ]
+        update_display_process_output = 'dummy process output'
+        update_display_process_mock = popen_mock(
+            popen_command,
+            stdout=stdout_mock,
+            stderr=stderr_mock,
+            text=True
+        )
+        process_info_output = 'dummy process info output'
+        get_process_info_function_mock.return_value = process_info_output
+
+        cases: list[dict[str, Any]] = [
+            {
+                'description': 'No output',
+                'update_display_process_output': None,
+                'expected_exception_message': (
+                    'Timeout during updating display.\n'
+                    'Process info:\n{}'
+                ).format(
+                    process_info_output
+                ),
+            },
+            {
+                'description': 'With output',
+                'update_display_process_output': update_display_process_output,
+                'expected_exception_message': (
+                    'Timeout during updating display.\n'
+                    "Process output: '{}'.\n"
+                    'Process info:\n{}'
+                ).format(
+                    update_display_process_output,
+                    process_info_output
+                ),
+            },
+        ]
+
+        for case in cases:
+            with self.subTest(case['description']):
+                update_display_process_mock.communicate.side_effect = [
+                    subprocess.TimeoutExpired(
+                        popen_command,
+                        display.Display.TIMEOUT,
+                        case['update_display_process_output']
+                    ),
+                    (case['update_display_process_output'], None)
+                ]
+
+                popen_mock.reset_mock()
+                get_process_info_function_mock.reset_mock()
+                update_display_process_mock.reset_mock()
+
+                self.assertListEqual(popen_mock.mock_calls, [])
                 self.assertListEqual(stdout_mock.mock_calls, [])
                 self.assertListEqual(stderr_mock.mock_calls, [])
-                self.assertListEqual(process_mock.mock_calls, expected_process_mock_calls)
-                self.assertListEqual(process_info_mock.mock_calls, expected_process_info_mock_calls)
+                self.assertListEqual(update_display_process_mock.mock_calls, [])
+                self.assertListEqual(get_process_info_function_mock.mock_calls, [])
+
+                try:
+                    with display.Display(self.__class__.TEST_VCOM_VALUE, self.__class__.TEST_PATH_TO_IMAGE_FILE) as dsp:
+                        self.assertListEqual(popen_mock.mock_calls, [])
+                        self.assertListEqual(stdout_mock.mock_calls, [])
+                        self.assertListEqual(stderr_mock.mock_calls, [])
+                        self.assertListEqual(update_display_process_mock.mock_calls, [])
+                        self.assertListEqual(get_process_info_function_mock.mock_calls, [])
+
+                        dsp.update()
+
+                        self.assertListEqual(
+                            popen_mock.mock_calls,
+                            [
+                                call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                                call().send_signal(sigusr1_mock),
+                            ]
+                        )
+                        self.assertListEqual(stdout_mock.mock_calls, [])
+                        self.assertListEqual(stderr_mock.mock_calls, [])
+                        self.assertListEqual(
+                            update_display_process_mock.mock_calls,
+                            [
+                                call.send_signal(sigusr1_mock),
+                            ]
+                        )
+                        self.assertListEqual(get_process_info_function_mock.mock_calls, [])
+
+                except RuntimeError as error:
+                    self.assertEqual(
+                        case['expected_exception_message'],
+                        str(error)
+                    )
+
+                    self.assertListEqual(
+                        popen_mock.mock_calls,
+                        [
+                            call(popen_command, stdout=stdout_mock, stderr=stderr_mock, text=True),
+                            call().send_signal(sigusr1_mock),
+                            call().send_signal(sigterm_mock),
+                            call().communicate(timeout=display.Display.TIMEOUT),
+                            call().kill(),
+                            call().communicate(),
+                        ]
+                    )
+                    self.assertListEqual(stdout_mock.mock_calls, [])
+                    self.assertListEqual(stderr_mock.mock_calls, [])
+                    self.assertListEqual(
+                        update_display_process_mock.mock_calls,
+                        [
+                            call.send_signal(sigusr1_mock),
+                            call.send_signal(sigterm_mock),
+                            call.communicate(timeout=display.Display.TIMEOUT),
+                            call.kill(),
+                            call.communicate(),
+                        ]
+                    )
+                    self.assertListEqual(
+                        get_process_info_function_mock.mock_calls,
+                        [call(update_display_process_mock)]
+                    )
+
+                    continue
+
+                self.fail('The expected exception was not raised.')

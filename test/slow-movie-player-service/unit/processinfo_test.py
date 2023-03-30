@@ -203,3 +203,127 @@ class ProcessInfoTest(TestCase):
                 self.assertListEqual(stderr_mock.mock_calls, [])
                 self.assertListEqual(process_mock.mock_calls, expected_process_mock_calls)
                 self.assertListEqual(open_function_mock.mock_calls, expected_open_function_mock_calls)
+
+    @patch('subprocess.Popen', spec=subprocess.Popen)
+    @patch('processinfo.ProcessInfo.get_stack_trace', spec=processinfo.ProcessInfo.get_stack_trace)
+    @patch('processinfo.ProcessInfo.get_kernel_trace', spec=processinfo.ProcessInfo.get_kernel_trace)
+    @patch('processinfo.ProcessInfo.get_status', spec=processinfo.ProcessInfo.get_status)
+    def test_get_process_info(
+        self,
+        get_status_function_mock: Mock,
+        get_kernel_trace_function_mock: Mock,
+        get_stack_trace_function_mock: Mock,
+        process_mock: Mock
+    ) -> None:
+        process_status_str = 'dummy process status string'
+        kernel_trace_str = 'dummy kernel trace string'
+        stack_trace_str = 'dummy stack trace string'
+        pid = 1
+        expected_mock_function_calls = [call(pid)]
+
+        def reset_mocks() -> None:
+            get_status_function_mock.reset_mock()
+            get_kernel_trace_function_mock.reset_mock()
+            get_stack_trace_function_mock.reset_mock()
+            process_mock.reset_mock()
+
+        cases: list[dict[str, Any]] = [
+            {
+                'setup': (
+                    'get_status_function_mock.return_value = "{process_status_str}"\n'
+                    'get_kernel_trace_function_mock.return_value = "{kernel_trace_str}"\n'
+                    'get_stack_trace_function_mock.return_value = "{stack_trace_str}"\n'
+                    'process_mock.pid = {pid}\n'
+                    'reset_mocks()\n'
+                ).format(
+                    process_status_str=process_status_str,
+                    kernel_trace_str=kernel_trace_str,
+                    stack_trace_str=stack_trace_str,
+                    pid=pid
+                ),
+                'expected_value': (
+                    '--- Process status:\n'
+                    '{process_status_str}\n'
+                    '--- Stack trace:\n'
+                    '{stack_trace_str}\n'
+                    '--- Kernel trace:\n'
+                    '{kernel_trace_str}'
+                ).format(
+                    process_status_str=process_status_str,
+                    stack_trace_str=stack_trace_str,
+                    kernel_trace_str=kernel_trace_str
+                ),
+            },
+            {
+                'setup': (
+                    r'get_status_function_mock.return_value = "{process_status_str}\n"'
+                    '\n'
+                    r'get_kernel_trace_function_mock.return_value = "{kernel_trace_str}\n"'
+                    '\n'
+                    r'get_stack_trace_function_mock.return_value = "{stack_trace_str}\n"'
+                    '\n'
+                    'process_mock.pid = {pid}\n'
+                    'reset_mocks()\n'
+                ).format(
+                    process_status_str=process_status_str,
+                    kernel_trace_str=kernel_trace_str,
+                    stack_trace_str=stack_trace_str,
+                    pid=pid
+                ),
+                'expected_value': (
+                    '--- Process status:\n'
+                    '{process_status_str}\n'
+                    '--- Stack trace:\n'
+                    '{stack_trace_str}\n'
+                    '--- Kernel trace:\n'
+                    '{kernel_trace_str}'
+                ).format(
+                    process_status_str=process_status_str,
+                    stack_trace_str=stack_trace_str,
+                    kernel_trace_str=kernel_trace_str
+                ),
+            },
+            {
+                'setup': (
+                    r'get_status_function_mock.return_value = "{process_status_str}\n"'
+                    '\n'
+                    'get_kernel_trace_function_mock.return_value = None\n'
+                    r'get_stack_trace_function_mock.return_value = "{stack_trace_str}\n"'
+                    '\n'
+                    'process_mock.pid = {pid}\n'
+                    'reset_mocks()\n'
+                ).format(
+                    process_status_str=process_status_str,
+                    stack_trace_str=stack_trace_str,
+                    pid=pid
+                ),
+                'expected_value': (
+                    '--- Process status:\n'
+                    '{process_status_str}\n'
+                    '--- Stack trace:\n'
+                    '{stack_trace_str}'
+                ).format(
+                    process_status_str=process_status_str,
+                    stack_trace_str=stack_trace_str
+                ),
+            },
+        ]
+
+        for case in cases:
+            with self.subTest():
+                exec(case['setup'])
+
+                self.assertListEqual(get_status_function_mock.mock_calls, [])
+                self.assertListEqual(get_kernel_trace_function_mock.mock_calls, [])
+                self.assertListEqual(get_stack_trace_function_mock.mock_calls, [])
+                self.assertListEqual(process_mock.mock_calls, [])
+
+                self.assertEqual(
+                    case['expected_value'],
+                    processinfo.ProcessInfo.get_process_info(process_mock)
+                )
+
+                self.assertListEqual(get_status_function_mock.mock_calls, expected_mock_function_calls)
+                self.assertListEqual(get_kernel_trace_function_mock.mock_calls, expected_mock_function_calls)
+                self.assertListEqual(get_stack_trace_function_mock.mock_calls, expected_mock_function_calls)
+                self.assertListEqual(process_mock.mock_calls, [])
