@@ -1,6 +1,6 @@
 import cv2
 import numpy
-from typing import Tuple, Union
+from typing import Union
 
 
 class Video:
@@ -13,7 +13,7 @@ class Video:
     def get_frame_rate(self) -> float:
         return self.__video.get(cv2.CAP_PROP_FPS)
 
-    def get_stats(self) -> Tuple[int, float]:
+    def get_stats(self) -> tuple[int, float]:
         frame_rate = self.get_frame_rate()
         frame_count = int(self.__video.get(cv2.CAP_PROP_FRAME_COUNT))
         duration = (frame_count / frame_rate) * 1000.0
