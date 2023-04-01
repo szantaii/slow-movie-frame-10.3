@@ -1,5 +1,6 @@
 [Unit]
 Description=Slow Movie Player
+Documentation=https://github.com/szantaii/slow-movie-frame-10.3
 
 [Service]
 Type=exec
