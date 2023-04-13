@@ -61,12 +61,10 @@ class ImageTest(TestCase):
             with self.subTest(wrong_data_type=wrong_data_type):
                 self.assertRaisesRegex(
                     ValueError,
-                    r"Value of attribute 'dtype' of 'image' is not '<class 'numpy\.uint8'>'\.$",
+                    r"^Value of attribute 'dtype' of 'image' is not '<class 'numpy\.uint8'>'\.$",
                     image.Image,
                     numpy.ndarray((1, 1, 3), dtype=wrong_data_type)
                 )
-
-                self.assertFalse(os.path.exists(self.four_bits_per_pixel_image_file_path))
 
     def test_resize_keeping_aspect_ratio(self) -> None:
         cases: list[dict[str, Any]] = [
