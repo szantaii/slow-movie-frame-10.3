@@ -50,3 +50,24 @@ class ProcessInfo:
         )
 
         return stack_trace_process.communicate()[0]
+
+    @classmethod
+    def get_process_info(cls, process: subprocess.Popen) -> str:
+        status = cls.get_status(process.pid)
+        kernel_trace = cls.get_kernel_trace(process.pid)
+        stack_trace = cls.get_stack_trace(process.pid)
+
+        process_info = '--- Process status:\n{}'.format(status)
+
+        if not process_info.endswith('\n'):
+            process_info += '\n'
+
+        process_info += '--- Stack trace:\n{}'.format(stack_trace)
+
+        if kernel_trace:
+            if not process_info.endswith('\n'):
+                process_info += '\n'
+
+            process_info += '--- Kernel trace:\n{}'.format(kernel_trace)
+
+        return process_info.rstrip('\n')

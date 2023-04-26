@@ -7,27 +7,61 @@
 #include <math.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <signal.h>
+
+uint32_t target_memory_address = 0x0;
+IT8951_Dev_Info device_info = {
+    0,
+    0,
+    0,
+    0,
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 0, 0, 0, 0, 0, 0, 0}};
+
+void sigterm_handler(int signum)
+{
+    (void)(signum);
+
+    if (target_memory_address != 0)
+    {
+        EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
+    }
+
+    EPD_IT8951_Sleep();
+    DEV_Module_Exit();
+
+    exit(0);
+}
+
+void sigusr1_handler(int signum)
+{
+    (void)(signum);
+}
 
 int main(int argc, char *argv[])
 {
     int exit_status = 0;
     int opt = 0;
     char *file_path = NULL;
+    sigset_t signal_set;
+    int received_signal = -1;
     double tmp_vcom = 0.0;
     uint16_t vcom = 0;
-    uint32_t target_memory_address = 0x0;
-    IT8951_Dev_Info device_info = {
-        0,
-        0,
-        0,
-        0,
-        {0, 0, 0, 0, 0, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0, 0}};
+    bool is_daemon = false;
 
-    while ((opt = getopt(argc, argv, "f:hv:")) != -1)
+    while ((opt = getopt(argc, argv, "df:hv:")) != -1)
     {
         switch (opt)
         {
+        case 'd':
+            is_daemon = true;
+            sigemptyset(&signal_set);
+            sigaddset(&signal_set, SIGUSR1);
+            signal(SIGTERM, sigterm_handler);
+            signal(SIGUSR1, sigusr1_handler);
+
+            break;
+
         case 'f':
             file_path = optarg;
 
@@ -115,51 +149,61 @@ int main(int argc, char *argv[])
 
     target_memory_address = device_info.Memory_Addr_L | (device_info.Memory_Addr_H << 16);
 
-    if (file_path != NULL)
+    if (file_path == NULL)
     {
-        if (str_ends_with(file_path, ".bmp") == 0)
-        {
-            if (display_bmp_image(device_info, target_memory_address, file_path) != 0)
-            {
-                exit_status = 4;
-
-                fprintf(
-                    stderr,
-                    "%s (%s).\n",
-                    "Error during drawing BMP image onto display",
-                    file_path);
-
-                EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
-            }
-        }
-        else if (str_ends_with(file_path, ".4bpp") == 0)
-        {
-            if (display_4bpp_image(device_info, target_memory_address, file_path) != 0)
-            {
-                exit_status = 4;
-
-                fprintf(
-                    stderr,
-                    "%s (%s).\n",
-                    "Error during drawing 4bpp image onto display",
-                    file_path);
-
-                EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
-            }
-        }
-        else
-        {
-            exit_status = 5;
-
-            fprintf(
-                stderr,
-                "%s\n",
-                "Unsupported image file format.");
-        }
+        EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
     }
     else
     {
-        EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
+        do
+        {
+            if (is_daemon)
+            {
+                kill(getppid(), SIGUSR1);
+                sigwait(&signal_set, &received_signal);
+            }
+
+            if (str_ends_with(file_path, ".bmp") == 0)
+            {
+                if (display_bmp_image(device_info, target_memory_address, file_path) != 0)
+                {
+                    exit_status = 4;
+
+                    fprintf(
+                        stderr,
+                        "%s (%s).\n",
+                        "Error during drawing BMP image onto display",
+                        file_path);
+
+                    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
+                }
+            }
+            else if (str_ends_with(file_path, ".4bpp") == 0)
+            {
+                if (display_4bpp_image(device_info, target_memory_address, file_path) != 0)
+                {
+                    exit_status = 4;
+
+                    fprintf(
+                        stderr,
+                        "%s (%s).\n",
+                        "Error during drawing 4bpp image onto display",
+                        file_path);
+
+                    EPD_IT8951_Clear_Refresh(device_info, target_memory_address, INIT_Mode);
+                }
+            }
+            else
+            {
+                exit_status = 5;
+
+                fprintf(
+                    stderr,
+                    "%s\n",
+                    "Unsupported image file format.");
+            }
+        }
+        while (is_daemon);
     }
 
     EPD_IT8951_Sleep();
