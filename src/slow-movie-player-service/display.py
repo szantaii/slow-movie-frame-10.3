@@ -1,6 +1,6 @@
 from processinfo import ProcessInfo
 import subprocess
-from typing import Union
+from typing import Optional
 
 
 class Display:
@@ -8,7 +8,7 @@ class Display:
     def __update(
         vcom: float,
         file_path: str = '',
-        timeout: Union[None, int] = None
+        timeout: Optional[int] = None
     ) -> None:
         command = ['/opt/slow-movie-player/update-display', '-v', str(vcom)]
 

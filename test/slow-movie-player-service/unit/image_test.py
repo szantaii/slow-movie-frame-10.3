@@ -169,7 +169,7 @@ class ImageTest(TestCase):
         numpy_uint8_mock: Mock
     ) -> None:
 
-        cases = [
+        cases: list[dict[str, int]] = [
             {
                 'image_width': 2 ** 16 - 1,
                 'image_height': 2 ** 16 - 1,
@@ -206,7 +206,7 @@ class ImageTest(TestCase):
                 input_image_mock.reset_mock()
 
                 expected_numpy_ndarray_mock_calls = [
-                     call().dtype.__ne__(numpy_uint8_mock),
+                    call().dtype.__ne__(numpy_uint8_mock),
                 ]
                 expected_input_image_mock_calls = [
                     call.dtype.__ne__(numpy_uint8_mock),

@@ -51,5 +51,5 @@ class GrayscaleMethod(str, enum.Enum):
     RMS = 'RMS'
 
     @classmethod
-    def _missing_(cls, _: str):
+    def _missing_(cls, _: object) -> str:
         return cls.REC709LUMA

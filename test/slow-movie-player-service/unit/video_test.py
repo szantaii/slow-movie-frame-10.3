@@ -4,6 +4,7 @@ from unittest.mock import call, Mock, patch
 import cv2
 import sys
 import re
+from typing import Any
 
 video = get_module_from_file('../../src/slow-movie-player-service/video.py')
 
@@ -102,7 +103,7 @@ class VideoTest(TestCase):
         frame_based_position_mock: Mock
     ) -> None:
 
-        cases = (
+        cases: list[dict[str, Any]] = [
             {
                 'description': 'Get first frame by frame index',
                 'position': 0,
@@ -138,7 +139,7 @@ class VideoTest(TestCase):
                 'position': sys.float_info.max,  # milliseconds
                 'frame_data': 'dummy data by timestamp #4',
             },
-        )
+        ]
 
         for case in cases:
             with self.subTest(case['description']):
@@ -177,7 +178,7 @@ class VideoTest(TestCase):
 
     @patch('cv2.VideoCapture', spec=cv2.VideoCapture)
     def test_get_frame_with_wrong_types(self, video_capture_mock: Mock) -> None:
-        wrong_type_inputs = [
+        wrong_type_inputs: list[Any] = [
             None,
             1j,
             '',
@@ -289,7 +290,7 @@ class VideoTest(TestCase):
         frame_based_position_mock: Mock
     ) -> None:
 
-        cases = (
+        cases: list[dict[str, Any]] = [
             {
                 'description': 'Get frame by index',
                 'position': 0,
@@ -300,7 +301,7 @@ class VideoTest(TestCase):
                 'position': 0.0,  # milliseconds
                 'frame_data': 'dummy data #2',
             },
-        )
+        ]
 
         for case in cases:
             with self.subTest(case['description']):

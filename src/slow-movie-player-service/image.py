@@ -116,7 +116,7 @@ class Image:
         os.remove(grayscale_palette_file_path)
 
         if convert_process.returncode != 0:
-            raise RuntimeError("Failed to apply Floyd-Steinberg dithering: '{}'.".format(stderr))
+            raise RuntimeError("Failed to apply Floyd-Steinberg dithering: '{!r}'.".format(stderr))
 
         pgm_image_data = numpy.asarray(bytearray(pgm_image), dtype=numpy.uint8)
 

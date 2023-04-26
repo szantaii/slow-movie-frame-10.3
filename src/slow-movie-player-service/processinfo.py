@@ -1,6 +1,6 @@
 import os
 import subprocess
-from typing import Union
+from typing import Optional
 
 
 class ProcessInfo:
@@ -10,11 +10,11 @@ class ProcessInfo:
             return status_file.read()
 
     @staticmethod
-    def get_kernel_trace(pid: int) -> Union[None, str]:
+    def get_kernel_trace(pid: int) -> Optional[str]:
         kernel_config_file_path = '/proc/config.gz'
 
         if not os.path.exists(kernel_config_file_path):
-            return
+            return None
 
         kernel_config_process = subprocess.Popen(
             ['zcat', kernel_config_file_path],
@@ -26,7 +26,7 @@ class ProcessInfo:
         kernel_configs = kernel_config_process.communicate()[0]
 
         if 'CONFIG_STACKTRACE=y\n' not in kernel_configs:
-            return
+            return None
 
         with open('/proc/{}/stack'.format(pid), 'r') as kernel_stack_file:
             return kernel_stack_file.read()

@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import call, Mock, mock_open, patch
 import os
 import subprocess
+from typing import Any
 
 processinfo = get_module_from_file('../../src/slow-movie-player-service/processinfo.py')
 
@@ -86,7 +87,7 @@ class ProcessInfoTest(TestCase):
     ) -> None:
         kernel_config_file_path = '/proc/config.gz'
 
-        cases = [
+        cases: list[dict[str, Any]] = [
             {
                 'description': 'Kernel config file does not exist',
                 'process_id': 111,

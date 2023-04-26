@@ -3,6 +3,7 @@ from unittest import TestCase
 from unittest.mock import call, Mock, patch
 import re
 import subprocess
+from typing import Any
 
 processinfo = get_module_from_file('../../src/slow-movie-player-service/processinfo.py')
 display = get_module_from_file('../../src/slow-movie-player-service/display.py')
@@ -193,7 +194,7 @@ class DisplayTest(TestCase):
             self.__class__.TEST_PATH_TO_IMAGE_FILE
         ]
 
-        cases = [
+        cases: list[dict[str, Any]] = [
             {
                 'description': 'Timeout expired #1',
                 'process_exit_status': 0,

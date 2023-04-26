@@ -4,6 +4,7 @@ import configparser
 import tempfile
 import os
 import sys
+from typing import Any
 
 skip = get_module_from_file('../../src/slow-movie-player-service/skip.py')
 grayscalemethod = get_module_from_file('../../src/slow-movie-player-service/grayscalemethod.py')
@@ -33,7 +34,7 @@ class ConfigurationTest(TestCase):
         super().tearDown()
 
     def test_configuration_with_valid_configurations(self) -> None:
-        cases = [
+        cases: list[dict[str, Any]] = [
             {
                 'description': 'Minimal valid config',
                 'config_file_contents': (
@@ -200,7 +201,7 @@ class ConfigurationTest(TestCase):
                     )
 
     def test_configuration_with_missing_mandatory_options(self) -> None:
-        cases = [
+        cases: list[dict[str, str]] = [
             {
                 'config_file_contents': '',
                 'missing_mandatory_option': 'vcom',
@@ -252,7 +253,7 @@ class ConfigurationTest(TestCase):
             'grayscale_method = Rec709Luma\n'
         )
 
-        cases = [
+        cases: list[dict[str, str]] = [
             {
                 'description': 'Empty string for display_resolution #1',
                 'display_resolution': '',
@@ -312,7 +313,7 @@ class ConfigurationTest(TestCase):
                 )
 
     def test_configuration_with_out_of_range_values(self) -> None:
-        cases = [
+        cases: list[dict[str, str]] = [
             {
                 'description': 'Infinite vcom value #1',
                 'config_file_contents': (

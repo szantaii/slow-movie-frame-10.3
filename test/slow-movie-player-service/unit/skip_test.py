@@ -2,13 +2,14 @@ from module_helper import get_module_from_file
 import sys
 import re
 from unittest import TestCase
+from typing import Any
 
 skip = get_module_from_file('../../src/slow-movie-player-service/skip.py')
 
 
 class AbstractSkipTest(TestCase):
     def test_abstract_skip_is_not_instantiable(self) -> None:
-        test_inputs = [
+        test_inputs: list[Any] = [
             None,
             True,
             False,
@@ -95,7 +96,7 @@ class FrameSkipTest(TestCase):
                 )
 
     def test_frame_skip_with_wrong_types(self) -> None:
-        wrong_type_inputs = [
+        wrong_type_inputs: list[Any] = [
             None,
             0.0,
             1.0,
@@ -169,7 +170,7 @@ class TimeSkipTest(TestCase):
                 )
 
     def test_time_skip_with_wrong_types(self) -> None:
-        wrong_type_inputs = [
+        wrong_type_inputs: list[Any] = [
             None,
             True,
             False,
