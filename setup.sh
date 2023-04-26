@@ -24,6 +24,7 @@ declare -a files=(
     "${script_dir}/src/slow-movie-player-service/display.py:${target_main_dir}/display.py:root:root:0600"
     "${script_dir}/src/slow-movie-player-service/grayscalemethod.py:${target_main_dir}/grayscalemethod.py:root:root:0600"
     "${script_dir}/src/slow-movie-player-service/image.py:${target_main_dir}/image.py:root:root:0600"
+    "${script_dir}/src/slow-movie-player-service/processinfo.py:${target_main_dir}/processinfo.py:root:root:0600"
     "${script_dir}/src/slow-movie-player-service/skip.py:${target_main_dir}/skip.py:root:root:0600"
     "${script_dir}/src/slow-movie-player-service/slowmovieplayer.py:${target_main_dir}/slowmovieplayer.py:root:root:0700"
     "${script_dir}/src/slow-movie-player-service/video.py:${target_main_dir}/video.py:root:root:0600"
