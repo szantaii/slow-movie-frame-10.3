@@ -19,6 +19,7 @@ class Configuration:
         self.refresh_timeout: float = 0.0
         self.video_directory: str = ''
         self.skip: Union[FrameSkip, TimeSkip] = FrameSkip(1)
+        self.random_frame: bool = False
 
         config_path = self.__get_first_config_file_path_from_directory(config_directory)
 
@@ -65,6 +66,11 @@ class Configuration:
                 parser.get(self.__class__.SECTION_NAME, 'grayscale_method', fallback='')
             )
         )
+
+        try:
+            self.random_frame = parser.getboolean(self.__class__.SECTION_NAME, 'random_frame', fallback=False)
+        except ValueError:
+            pass
 
         if (math.isinf(self.vcom)
                 or self.screen_width <= 0

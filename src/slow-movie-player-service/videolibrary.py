@@ -6,6 +6,7 @@ from collections import OrderedDict
 import json
 import numpy
 import os
+import random
 
 
 class VideoLibrary:
@@ -169,9 +170,12 @@ class VideoLibrary:
                 self.__video_library[video_path]['next_frame'] = 0
                 self.__video_library[video_path]['next_timestamp'] = 0.0
 
-    def get_next_frame(self, skip: Union[FrameSkip, TimeSkip] = FrameSkip(1)) -> numpy.ndarray:
+    def __raise_on_empty_video_library(self) -> None:
         if not self.__video_library:
-            raise RuntimeError('Cannot get next frame from empty video library!')
+            raise RuntimeError('Cannot get frame from empty video library!')
+
+    def get_next_frame(self, skip: Union[FrameSkip, TimeSkip] = FrameSkip(1)) -> numpy.ndarray:
+        self.__raise_on_empty_video_library()
 
         if not isinstance(skip, (FrameSkip, TimeSkip)):
             raise TypeError(
@@ -207,3 +211,12 @@ class VideoLibrary:
                 self.__reset()
 
                 return self.get_next_frame(skip=skip)
+
+    def get_random_frame(self) -> numpy.ndarray:
+        self.__raise_on_empty_video_library()
+
+        video_path, video_info = random.choice(list(self.__video_library.items()))
+        frame_index = random.randint(0, video_info['frame_count'] - 1)
+        video = Video(video_path)
+
+        return video.get_frame(frame_index)
