@@ -133,6 +133,7 @@ class ConfigurationTest(TestCase):
         frame_skip_value = 3
         time_skip_value = 100.0
         grayscale_method_value = 'Rec709Luma'
+        random_frame_value = False
 
         default_configuration_string = (
             'vcom = {vcom_value}\n'
@@ -142,6 +143,7 @@ class ConfigurationTest(TestCase):
             'frame_skip = {frame_skip_value}\n'
             'time_skip = {time_skip_value}\n'
             'grayscale_method = "{grayscale_method_value}"\n'
+            'random_frame = {random_frame_value}\n'
         ).format(
             vcom_value=vcom_value,
             display_resolution_value=display_resolution_value,
@@ -149,7 +151,8 @@ class ConfigurationTest(TestCase):
             video_directory_value=video_directory_value,
             frame_skip_value=frame_skip_value,
             time_skip_value=time_skip_value,
-            grayscale_method_value=grayscale_method_value
+            grayscale_method_value=grayscale_method_value,
+            random_frame_value=('true' if random_frame_value else 'false')
         )
 
         config_file_absolute_path = '{}/{}'.format(
@@ -207,6 +210,7 @@ class ConfigurationTest(TestCase):
         self.assertEqual(config.screen_height, screen_height_value)
         self.assertEqual(config.refresh_timeout, refresh_timeout_value)
         self.assertEqual(config.video_directory, video_directory_value)
+        self.assertEqual(config.random_frame, random_frame_value)
 
         self.assertListEqual(path_join_function_mock.mock_calls, expected_path_join_function_mock_calls)
         self.assertListEqual(scandir_function_mock.mock_calls, expected_scandir_function_mock_calls)

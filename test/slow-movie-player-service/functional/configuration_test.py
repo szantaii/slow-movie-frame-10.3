@@ -15,9 +15,9 @@ class ConfigurationTest(TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-        config_directory = tempfile.mkdtemp()
+        self.config_directory_path = tempfile.mkdtemp()
         config_file = tempfile.NamedTemporaryFile(
-            dir=config_directory,
+            dir=self.config_directory_path,
             suffix=configuration.Configuration.CONFIGURATION_FILE_EXTENSION,
             delete=False
         )
@@ -25,7 +25,6 @@ class ConfigurationTest(TestCase):
         config_file.close()
 
         self.config_file_path = config_file.name
-        self.config_directory_path = config_directory
 
     def tearDown(self) -> None:
         os.remove(self.config_file_path)
@@ -51,6 +50,7 @@ class ConfigurationTest(TestCase):
                     'video_directory': '/',
                     'skip': skip.FrameSkip(1),
                     'grayscale_method': grayscalemethod.GrayscaleMethod(''),
+                    'random_frame': False,
                 },
             },
             {
@@ -61,7 +61,8 @@ class ConfigurationTest(TestCase):
                     'refresh_timeout=987.654321\n'
                     'video_directory=/ path / with \t/\twhitespace characters\n'
                     'frame_skip=97\n'
-                    'grayscale_method=Average'
+                    'grayscale_method=Average\n'
+                    'random_frame=true'
                 ),
                 'config_attribute_name_expected_value_pairs': {
                     'vcom': -123456.789,
@@ -71,6 +72,7 @@ class ConfigurationTest(TestCase):
                     'video_directory': '/ path / with \t/\twhitespace characters',
                     'skip': skip.FrameSkip(97),
                     'grayscale_method': grayscalemethod.GrayscaleMethod('Average'),
+                    'random_frame': True,
                 },
             },
             {
@@ -83,6 +85,7 @@ class ConfigurationTest(TestCase):
                     'time_skip = {time_skip}\n'
                     'frame_skip = {frame_skip}\n'
                     "grayscale_method = 'Rec601Luminance'\n"
+                    'random_frame = off\n'
                 ).format(
                     vcom='-0.{}'.format('1' * sys.float_info.dig),
                     screen_width=str(int(sys.float_info.max) // 2 - 1),
@@ -100,6 +103,7 @@ class ConfigurationTest(TestCase):
                     'video_directory': '/directory' * 10,
                     'skip': skip.TimeSkip(float('{0}.{0}'.format('5' * (sys.float_info.dig // 2)))),
                     'grayscale_method': grayscalemethod.GrayscaleMethod('Rec601Luminance'),
+                    'random_frame': False,
                 },
             },
             {
@@ -112,6 +116,7 @@ class ConfigurationTest(TestCase):
                     'frame_skip = 654\n'
                     'time_skip = 321\n'
                     'grayscale_method = "there is a typo in_this value but it does not matter"\n'
+                    'random_frame = 1\n'
                 ),
                 'config_attribute_name_expected_value_pairs': {
                     'vcom': 123.0,
@@ -121,6 +126,7 @@ class ConfigurationTest(TestCase):
                     'video_directory': '/path/to/video/directory',
                     'skip': skip.TimeSkip(321.0),
                     'grayscale_method': grayscalemethod.GrayscaleMethod('the default will be used here anyway'),
+                    'random_frame': True,
                 },
             },
             {
@@ -133,6 +139,7 @@ class ConfigurationTest(TestCase):
                     'frame_skip = 555\n'
                     'time_skip = 666.666\n'
                     'grayscale_method = RMS\n'
+                    'random_frame = yes\n'
                 ),
                 'config_attribute_name_expected_value_pairs': {
                     'vcom': -111.111,
@@ -142,6 +149,7 @@ class ConfigurationTest(TestCase):
                     'video_directory': '/another video directory path',
                     'skip': skip.TimeSkip(666.666),
                     'grayscale_method': grayscalemethod.GrayscaleMethod('RMS'),
+                    'random_frame': True,
                 },
             },
             {
@@ -153,6 +161,7 @@ class ConfigurationTest(TestCase):
                     'video_directory = \u00AF\u005C\u005F\u0028\u30C4\u0029\u005F\u002F\u00AF\n'
                     'frame_skip = 555\n'
                     'grayscale_method = RMS\n'
+                    'random_frame = no\n'
                 ),
                 'config_attribute_name_expected_value_pairs': {
                     'vcom': -987.654,
@@ -162,6 +171,7 @@ class ConfigurationTest(TestCase):
                     'video_directory': r"¯\_(ツ)_/¯",
                     'skip': skip.FrameSkip(555),
                     'grayscale_method': grayscalemethod.GrayscaleMethod('RMS'),
+                    'random_frame': False,
                 },
             },
             {
@@ -174,6 +184,7 @@ class ConfigurationTest(TestCase):
                     'time_skip = 232.323\n'
                     'frame_skip = 434\n'
                     'grayscale_method = Brightness\n'
+                    'random_frame = on\n'
                 ),
                 'config_attribute_name_expected_value_pairs': {
                     'vcom': 767.787,
@@ -183,6 +194,7 @@ class ConfigurationTest(TestCase):
                     'video_directory': '/this/is/the/last/one',
                     'skip': skip.TimeSkip(232.323),
                     'grayscale_method': grayscalemethod.GrayscaleMethod('Brightness'),
+                    'random_frame': True,
                 },
             },
         ]
@@ -381,3 +393,69 @@ class ConfigurationTest(TestCase):
                     configuration.Configuration,
                     self.config_directory_path
                 )
+
+    def test_configuration_with_valid_random_frame_configurations(self) -> None:
+        config_string_expected_value_pairs: dict[str, bool] = {
+            '1': True,
+            'yes': True,
+            'Yes': True,
+            'YES': True,
+            'true': True,
+            'True': True,
+            'TRUE': True,
+            'on': True,
+            'On': True,
+            'ON': True,
+            '0': False,
+            'no': False,
+            'No': False,
+            'NO': False,
+            'false': False,
+            'False': False,
+            'FALSE': False,
+            'off': False,
+            'Off': False,
+            'OFF': False,
+        }
+        config_file_contents_template = (
+            'video_directory = "/"\n'
+            'vcom = -1\n'
+            "display_resolution = '1x2'\n"
+            'refresh_timeout = 1\n'
+            'random_frame = {}\n'
+        )
+
+        for config_string, expected_value in config_string_expected_value_pairs.items():
+            with self.subTest('random_frame = {}'.format(config_string)):
+                with open(self.config_file_path, mode='w') as config_file:
+                    config_file.write(config_file_contents_template.format(config_string))
+
+                config = configuration.Configuration(self.config_directory_path)
+
+                self.assertEqual(config.random_frame, expected_value)
+
+    def test_configuration_with_invalid_random_frame_configurations(self) -> None:
+        invalid_random_frame_config_strings: list[str] = [
+            'ʕ •ᴥ•ʔ',
+            '\'aaaaaa\'',
+            'inf',
+            '-inf',
+            '-1',
+            '2',
+        ]
+        config_file_contents_template = (
+            'video_directory = "/"\n'
+            'vcom = -1\n'
+            "display_resolution = '1x2'\n"
+            'refresh_timeout = 1\n'
+            'random_frame = {}\n'
+        )
+
+        for config_string in invalid_random_frame_config_strings:
+            with self.subTest('random_frame = {}'.format(config_string)):
+                with open(self.config_file_path, mode='w') as config_file:
+                    config_file.write(config_file_contents_template.format(config_string))
+
+                config = configuration.Configuration(self.config_directory_path)
+
+                self.assertFalse(config.random_frame)

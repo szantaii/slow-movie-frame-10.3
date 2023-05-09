@@ -377,7 +377,7 @@ class VideoLibraryTest(TestCase):
         self.assert_file_contents_equals(self.video_library_file_path, expected_video_library_file_contents)
         self.assertRaisesRegex(
             RuntimeError,
-            r"^Cannot get next frame from empty video library!$",
+            r"^Cannot get frame from empty video library!$",
             video_library.get_next_frame
         )
         self.assert_file_contents_equals(self.video_library_file_path, expected_video_library_file_contents)
@@ -435,3 +435,76 @@ class VideoLibraryTest(TestCase):
                 )
             )
         )
+
+    def test_get_random_frame(self) -> None:
+        video_file_properties_1 = self.create_video_in_video_directory('video_1.mkv')
+        video_file_properties_2 = self.create_video_in_video_directory('video_2.avi')
+        initial_video_library_file_contents = self.__class__.VIDEO_LIBRARY_FILE_CONTENTS_TEMPLATE.format(
+            '{},{}'.format(
+                self.__class__.VIDEO_LIBRARY_ENTRY_TEMPLATE.format(*video_file_properties_1.values(), 0, 0.0),
+                self.__class__.VIDEO_LIBRARY_ENTRY_TEMPLATE.format(*video_file_properties_2.values(), 0, 0.0)
+            )
+        )
+        video_library_file_contents_after_second_frame = self.__class__.VIDEO_LIBRARY_FILE_CONTENTS_TEMPLATE.format(
+            '{},{}'.format(
+                self.__class__.VIDEO_LIBRARY_ENTRY_TEMPLATE.format(*video_file_properties_1.values(), 2, 2000.0),
+                self.__class__.VIDEO_LIBRARY_ENTRY_TEMPLATE.format(*video_file_properties_2.values(), 0, 0.0)
+            )
+        )
+        expected_video_frames = []
+
+        for expected_color in [[0, 0, 255], [0, 255, 0], [255, 0, 0]]:
+            expected_video_frames.append(numpy.full((240, 320, 3), expected_color, dtype=numpy.uint8))
+
+        def assert_random_video_frame_in_expected_frames(random_video_frame: numpy.ndarray) -> None:
+            self.assertEqual(
+                [
+                    False,
+                    False,
+                    True,
+                ],
+                sorted(
+                    [
+                        numpy.allclose(random_video_frame, expected_video_frames[0], rtol=0, atol=5),
+                        numpy.allclose(random_video_frame, expected_video_frames[1], rtol=0, atol=5),
+                        numpy.allclose(random_video_frame, expected_video_frames[2], rtol=0, atol=5),
+                    ]
+                )
+            )
+
+        self.assertFalse(os.path.exists(self.video_library_file_path))
+
+        video_library = videolibrary.VideoLibrary(self.video_directory_path)
+
+        self.assert_file_contents_equals(self.video_library_file_path, initial_video_library_file_contents)
+
+        random_video_frame_1 = video_library.get_random_frame()
+
+        assert_random_video_frame_in_expected_frames(random_video_frame_1)
+
+        self.assert_file_contents_equals(self.video_library_file_path, initial_video_library_file_contents)
+
+        video_library.get_next_frame(skip.TimeSkip(2000.0))
+
+        self.assert_file_contents_equals(self.video_library_file_path, video_library_file_contents_after_second_frame)
+
+        random_video_frame_2 = video_library.get_random_frame()
+
+        assert_random_video_frame_in_expected_frames(random_video_frame_2)
+
+        self.assert_file_contents_equals(self.video_library_file_path, video_library_file_contents_after_second_frame)
+
+    def test_get_random_frame_with_empty_video_library(self) -> None:
+        expected_video_library_file_contents = '{}'
+
+        self.assertFalse(os.path.exists(self.video_library_file_path))
+
+        video_library = videolibrary.VideoLibrary(self.video_directory_path)
+
+        self.assert_file_contents_equals(self.video_library_file_path, expected_video_library_file_contents)
+        self.assertRaisesRegex(
+            RuntimeError,
+            r"^Cannot get frame from empty video library!$",
+            video_library.get_random_frame
+        )
+        self.assert_file_contents_equals(self.video_library_file_path, expected_video_library_file_contents)
