@@ -20,6 +20,7 @@ A picture frame enclosing an e-paper device which plays movies in a very slow ma
   * [`video_directory`](#video_directory)
   * [`frame_skip` & `time_skip`](#frame_skip--time_skip)
   * [`grayscale_method`](#grayscale_method)
+  * [`random_frame`](#random_frame)
 * [Installation](#installation)
 * [Tests](#tests)
 * [Acknowledgements](#acknowledgements)
@@ -139,6 +140,14 @@ git clone --recurse-submodules https://github.com/szantaii/slow-movie-frame-10.3
 
 The default configuration file ([`default.conf`](fixups/default.conf)) for the Slow Movie Player service can be found in the fixups directory. You can either edit the mentioned file or prepare your own configuration file for the Slow Movie Player service, however if the second approach is taken, then the [`setup.sh`](setup.sh) script must be modified to copy the custom configuration file, or it has to be placed manually.
 
+If you would like to edit your configuration after you have [installed Slow Movie Player](#installation) then you will have to edit the configuration file in the `/etc/slow-movie-player` directory and restart the `slow-movie-player.service` afterwards with the following command.
+
+```console
+$ sudo systemctl restart slow-movie-player.service
+```
+
+Note that if you follow this approach and uninstall Slow Movie Player then your post-install edited configuration will be lost unless you make a backup of it.
+
 Mandatory options and their respective types:
 
 | Option                                          | Type               |
@@ -155,6 +164,7 @@ Optional options and their respective types:
 | __[`frame_skip`](#frame_skip--time_skip)__  | positive integer |
 | __[`time_skip`](#frame_skip--time_skip)__   | positive float   |
 | __[`grayscale_method`](#grayscale_method)__ | string           |
+| __[`random_frame`](#random_frame)__         | boolean          |
 
 ### `vcom`
 
@@ -282,6 +292,18 @@ For further details about the grayscale methods, please see:
 `grayscale_method` is optional, so you may comment out this setting. In this case the default `Rec709Luma` grayscale method will be used.
 
 You may enclose the value between single or double quotes (e.g. `'Rec601Luminance'`) but it is not necessary.
+
+### `random_frame`
+
+(Optional, boolean.)
+
+By turning on this option, the Slow Movie Player Service will randomly display a frame from a random video in the `video_directory` directory every `refresh_timeout` seconds.
+
+If this option is turned on, then then specified `frame_skip` and `time_skip` settings are not taken into account.
+
+Valid options are the following: `1`, `yes`, `true`, `on` and `0`, `no`, `false`, `off`.
+
+`random_frame` is optional, so you may comment out this setting. In this case the `random_frame` option is turned off.
 
 ## Installation
 
