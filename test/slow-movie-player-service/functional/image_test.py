@@ -108,7 +108,7 @@ class ImageTest(TestCase):
                 'description': 'Enlarge 9:16 image when max height limits the resulting image resolution',
                 'input_image_shape': (64, 36, 3),
                 'resize_resolution': (1000, 72),
-                'expected_resolution': (40, 72),
+                'expected_resolution': (41, 72),
             },
             {
                 'description': 'Enlarge 1:1 aspect ratio image #1',
@@ -146,6 +146,30 @@ class ImageTest(TestCase):
                 'resize_resolution': (3, 6),
                 'expected_resolution': (3, 3),
             },
+            {
+                'description': 'Enlarge landscape image where specified width limits height',
+                'input_image_shape': (241, 640, 3),
+                'resize_resolution': (1872, 1404),
+                'expected_resolution': (1872, 705),
+            },
+            {
+                'description': 'Enlarge grayscale landscape image where specified width limits height',
+                'input_image_shape': (241, 640),
+                'resize_resolution': (1872, 1404),
+                'expected_resolution': (1872, 705),
+            },
+            {
+                'description': 'No resizing is done on image',
+                'input_image_shape': (193, 457, 3),
+                'resize_resolution': (457, 193),
+                'expected_resolution': (457, 193),
+            },
+            {
+                'description': 'No resizing is done on grayscale image',
+                'input_image_shape': (823, 563),
+                'resize_resolution': (563, 823),
+                'expected_resolution': (563, 823),
+            },
         ]
 
         for case in cases:
@@ -168,16 +192,202 @@ class ImageTest(TestCase):
                     expected_image_shape
                 )
 
+    def test_zoom(self) -> None:
+        cases: list[dict[str, Any]] = [
+            {
+                'description': 'Zoom into 1x1 pixel image',
+                'input_image_shape': (1, 1, 3),
+                'zoom_resolution': (3, 2),
+                'expected_image_shape': (2, 3, 3),
+            },
+            {
+                'description': 'Zoom to middle of landscape image #1',
+                'input_image_shape': (5, 6, 3),
+                'zoom_resolution': (2, 8),
+                'expected_image_shape': (8, 2, 3),
+            },
+            {
+                'description': 'Zoom to middle of landscape image #2',
+                'input_image_shape': (241, 640, 3),
+                'zoom_resolution': (1872, 1404),
+                'expected_image_shape': (1404, 1872, 3),
+            },
+            {
+                'description': 'Zoom to middle of portrait image',
+                'input_image_shape': (640, 241, 3),
+                'zoom_resolution': (1872, 1404),
+                'expected_image_shape': (1404, 1872, 3),
+            },
+            {
+                'description': 'No zoom is made on image',
+                'input_image_shape': (23, 67, 3),
+                'zoom_resolution': (67, 23),
+                'expected_image_shape': (23, 67, 3),
+            },
+            {
+                'description': 'Zoom into 1x1 pixel grayscale image',
+                'input_image_shape': (1, 1),
+                'zoom_resolution': (3, 2),
+                'expected_image_shape': (2, 3),
+            },
+            {
+                'description': 'Zoom to middle of grayscale landscape image #1',
+                'input_image_shape': (5, 6),
+                'zoom_resolution': (2, 8),
+                'expected_image_shape': (8, 2),
+            },
+            {
+                'description': 'Zoom to middle of grayscale landscape image #2',
+                'input_image_shape': (241, 640),
+                'zoom_resolution': (1872, 1404),
+                'expected_image_shape': (1404, 1872),
+            },
+            {
+                'description': 'Zoom to middle of grayscale portrait image',
+                'input_image_shape': (640, 241),
+                'zoom_resolution': (1872, 1404),
+                'expected_image_shape': (1404, 1872),
+            },
+            {
+                'description': 'No zoom is made on grayscale image',
+                'input_image_shape': (131, 79),
+                'zoom_resolution': (79, 131),
+                'expected_image_shape': (131, 79),
+            },
+        ]
+
+        for case in cases:
+            with self.subTest(case['description']):
+                input_image = numpy.full(
+                    case['input_image_shape'],
+                    0xff,
+                    dtype=numpy.uint8
+                )
+
+                img = image.Image(input_image).zoom(*case['zoom_resolution'])
+
+                self.assertTupleEqual(
+                    self.get_image_shape(img),
+                    case['expected_image_shape']
+                )
+
+    def test_zoom_with_image_data(self) -> None:
+        bgr_image_data = [
+            [[0x64, 0x3f, 0xd9], [0x6d, 0x43, 0x54], [0x52, 0x9f, 0xab], [0x51, 0xab, 0xcc]],
+            [[0x71, 0x10, 0x0e], [0x43, 0x51, 0x2d], [0x01, 0x46, 0x78], [0x11, 0x7d, 0xc2]],
+            [[0xab, 0x23, 0x69], [0x83, 0x68, 0x88], [0x4c, 0x85, 0x5a], [0x68, 0x99, 0xb0]],
+            [[0x89, 0xb5, 0xe2], [0x57, 0xb9, 0x78], [0x8b, 0x8a, 0xac], [0xa5, 0x72, 0xd2]],
+        ]
+        grayscale_image_data = [
+            [0x5b, 0x79, 0x8f, 0xa6],
+            [0x9f, 0x6f, 0x96, 0xc9],
+            [0x8c, 0x49, 0x90, 0x76],
+            [0x40, 0x36, 0x3a, 0x3e],
+        ]
+
+        cases: list[dict[str, Any]] = [
+            {
+                'description': 'Zoom into 1x1 pixel image',
+                'input_image_data': [
+                    [[0xff, 0xff, 0xff]],
+                ],
+                'zoom_resolution': (3, 2),
+                'expected_image_data': [
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                ],
+            },
+            {
+                'description': 'Zoom to middle of image',
+                'input_image_data': [
+                    [[0x00, 0x00, 0xff], [0x00, 0xff, 0x00], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0x00, 0x00], [0x00, 0x00, 0xff]],
+                    [[0x00, 0x00, 0xff], [0x00, 0xff, 0x00], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0x00, 0x00], [0x00, 0x00, 0xff]],
+                    [[0x00, 0x00, 0xff], [0x00, 0xff, 0x00], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0x00, 0x00], [0x00, 0x00, 0xff]],
+                    [[0x00, 0x00, 0xff], [0x00, 0xff, 0x00], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0x00, 0x00], [0x00, 0x00, 0xff]],
+                    [[0x00, 0x00, 0xff], [0x00, 0xff, 0x00], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0x00, 0x00], [0x00, 0x00, 0xff]],
+                ],
+                'zoom_resolution': (2, 8),
+                'expected_image_data': [
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
+                ],
+            },
+            {
+                'description': 'No zoom done on image',
+                'input_image_data': bgr_image_data,
+                'zoom_resolution': (4, 4),
+                'expected_image_data': bgr_image_data,
+            },
+            {
+                'description': 'Zoom into 1x1 pixel grayscale image',
+                'input_image_data': [
+                    [0xff],
+                ],
+                'zoom_resolution': (3, 2),
+                'expected_image_data': [
+                    [0xff, 0xff, 0xff],
+                    [0xff, 0xff, 0xff],
+                ],
+            },
+            {
+                'description': 'Zoom to middle of grayscale image',
+                'input_image_data': [
+                    [0x22, 0x77, 0xff, 0xff, 0x00, 0x77],
+                    [0x22, 0x77, 0xff, 0xff, 0x00, 0x77],
+                    [0x22, 0x77, 0xff, 0xff, 0x00, 0x77],
+                    [0x22, 0x77, 0xff, 0xff, 0x00, 0x77],
+                    [0x22, 0x77, 0xff, 0xff, 0x00, 0x77],
+                ],
+                'zoom_resolution': (2, 8),
+                'expected_image_data': [
+                    [0xff, 0xff],
+                    [0xff, 0xff],
+                    [0xff, 0xff],
+                    [0xff, 0xff],
+                    [0xff, 0xff],
+                    [0xff, 0xff],
+                    [0xff, 0xff],
+                    [0xff, 0xff],
+                ],
+            },
+            {
+                'description': 'No zoom done on grayscale image',
+                'input_image_data': grayscale_image_data,
+                'zoom_resolution': (4, 4),
+                'expected_image_data': grayscale_image_data,
+            },
+        ]
+
+        for case in cases:
+            with self.subTest(case['description']):
+                input_image = numpy.array(
+                    case['input_image_data'],
+                    dtype=numpy.uint8
+                )
+
+                img = image.Image(input_image).zoom(*case['zoom_resolution'])
+
+                self.assertListEqual(
+                    self.get_image_data(img),
+                    case['expected_image_data'],
+                )
+
     def test_add_padding(self) -> None:
         cases: list[dict[str, Any]] = [
             {
                 'description': 'Add horizontal padding to image',
                 'input_image_data': [
-                    [[0xff, 0xff, 0xff]]
+                    [[0xff, 0xff, 0xff]],
                 ],
                 'padding_resolution': (3, 1),
                 'expected_image_data': [
-                    [[0x00, 0x00, 0x00], [0xff, 0xff, 0xff], [0x00, 0x00, 0x00]]
+                    [[0x00, 0x00, 0x00], [0xff, 0xff, 0xff], [0x00, 0x00, 0x00]],
                 ],
             },
             {
@@ -189,19 +399,19 @@ class ImageTest(TestCase):
                 'expected_image_data': [
                     [[0x00, 0x00, 0x00]],
                     [[0xff, 0xff, 0xff]],
-                    [[0x00, 0x00, 0x00]]
+                    [[0x00, 0x00, 0x00]],
                 ],
             },
             {
                 'description': 'Add both horizontal and vertical padding to image',
                 'input_image_data': [
-                    [[0xff, 0xff, 0xff]]
+                    [[0xff, 0xff, 0xff]],
                 ],
                 'padding_resolution': (3, 3),
                 'expected_image_data': [
                     [[0x00, 0x00, 0x00], [0x00, 0x00, 0x00], [0x00, 0x00, 0x00]],
                     [[0x00, 0x00, 0x00], [0xff, 0xff, 0xff], [0x00, 0x00, 0x00]],
-                    [[0x00, 0x00, 0x00], [0x00, 0x00, 0x00], [0x00, 0x00, 0x00]]
+                    [[0x00, 0x00, 0x00], [0x00, 0x00, 0x00], [0x00, 0x00, 0x00]],
                 ],
             },
             {
@@ -211,19 +421,19 @@ class ImageTest(TestCase):
                 ],
                 'padding_resolution': (3, 1),
                 'expected_image_data': [
-                    [0x00, 0xff, 0x00]
+                    [0x00, 0xff, 0x00],
                 ],
             },
             {
                 'description': 'Add vertical padding to grayscale image',
                 'input_image_data': [
-                    [0xff]
+                    [0xff],
                 ],
                 'padding_resolution': (1, 3),
                 'expected_image_data': [
                     [0x00],
                     [0xff],
-                    [0x00]
+                    [0x00],
                 ],
             },
             {
@@ -233,7 +443,7 @@ class ImageTest(TestCase):
                 'expected_image_data': [
                     [0x00, 0x00, 0x00],
                     [0x00, 0xff, 0x00],
-                    [0x00, 0x00, 0x00]
+                    [0x00, 0x00, 0x00],
                 ],
             },
             {
@@ -241,13 +451,13 @@ class ImageTest(TestCase):
                 'input_image_data': [
                     [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
                     [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
-                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]]
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
                 ],
                 'padding_resolution': (3, 3),
                 'expected_image_data': [
                     [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
                     [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
-                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]]
+                    [[0xff, 0xff, 0xff], [0xff, 0xff, 0xff], [0xff, 0xff, 0xff]],
                 ],
             },
             {
@@ -255,13 +465,13 @@ class ImageTest(TestCase):
                 'input_image_data': [
                     [0xff, 0xff, 0xff],
                     [0xff, 0xff, 0xff],
-                    [0xff, 0xff, 0xff]
+                    [0xff, 0xff, 0xff],
                 ],
                 'padding_resolution': (3, 3),
                 'expected_image_data': [
                     [0xff, 0xff, 0xff],
                     [0xff, 0xff, 0xff],
-                    [0xff, 0xff, 0xff]
+                    [0xff, 0xff, 0xff],
                 ],
             },
         ]

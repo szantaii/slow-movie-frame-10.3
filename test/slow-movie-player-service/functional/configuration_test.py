@@ -258,7 +258,7 @@ class ConfigurationTest(TestCase):
         config_file_contents_template = (
             'vcom = -1.48\n'
             'display_resolution = {}\n'
-            'refresh_timeout = 300.0\n'
+            'refresh_timeout = 180.0\n'
             'video_directory = /just/another/valid/path/to/video/directory\n'
             'time_skip = 100.0\n'
             'frame_skip = 3\n'
@@ -331,7 +331,7 @@ class ConfigurationTest(TestCase):
                 'config_file_contents': (
                     'vcom = inf\n'
                     "display_resolution = 1872x1404\n"
-                    'refresh_timeout = 300.0\n'
+                    'refresh_timeout = 180.0\n'
                     'video_directory = /videos\n'
                 ),
             },
@@ -340,7 +340,7 @@ class ConfigurationTest(TestCase):
                 'config_file_contents': (
                     'vcom = -inf\n'
                     "display_resolution = 1872x1404\n"
-                    'refresh_timeout = 300.0\n'
+                    'refresh_timeout = 180.0\n'
                     'video_directory = /videos\n'
                 ),
             },
@@ -349,7 +349,7 @@ class ConfigurationTest(TestCase):
                 'config_file_contents': (
                     'vcom = -1.48\n'
                     "display_resolution = 0x1404\n"
-                    'refresh_timeout = 300.0\n'
+                    'refresh_timeout = 180.0\n'
                     'video_directory = /videos\n'
                 ),
             },
@@ -358,7 +358,7 @@ class ConfigurationTest(TestCase):
                 'config_file_contents': (
                     'vcom = -1.48\n'
                     "display_resolution = 1872x0\n"
-                    'refresh_timeout = 300.0\n'
+                    'refresh_timeout = 180.0\n'
                     'video_directory = /videos\n'
                 ),
             },
@@ -376,7 +376,7 @@ class ConfigurationTest(TestCase):
                 'config_file_contents': (
                     'vcom = -1.48\n'
                     "display_resolution = 1872x1404\n"
-                    'refresh_timeout = 300.0\n'
+                    'refresh_timeout = 180.0\n'
                     'video_directory = ""\n'
                 ),
             },

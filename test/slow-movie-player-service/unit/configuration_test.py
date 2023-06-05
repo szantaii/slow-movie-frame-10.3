@@ -128,7 +128,7 @@ class ConfigurationTest(TestCase):
             screen_width_value,
             screen_height_value
         )
-        refresh_timeout_value = 300.0
+        refresh_timeout_value = 180.0
         video_directory_value = '/videos'
         frame_skip_value = 3
         time_skip_value = 100.0
