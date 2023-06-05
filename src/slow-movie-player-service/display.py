@@ -40,11 +40,21 @@ class Display:
         )
 
         try:
-            signal.sigtimedwait([signal.SIGUSR1], self.__class__.TIMEOUT)
+            signal_info = signal.sigtimedwait([signal.SIGUSR1], self.__class__.TIMEOUT)
         except InterruptedError as error:
             self.__stop()
 
             raise error
+
+        if signal_info is None:
+            self.__stop()
+
+            raise RuntimeError(
+                'Error during updating display: '
+                'display did not become available in {} seconds.'.format(
+                    self.__class__.TIMEOUT
+                )
+            )
 
     def __stop(self) -> None:
         if self.__update_process is None:
@@ -96,11 +106,21 @@ class Display:
         self.__update_process.send_signal(signal.SIGUSR1)
 
         try:
-            signal.sigtimedwait([signal.SIGUSR1], self.__class__.TIMEOUT)
+            signal_info = signal.sigtimedwait([signal.SIGUSR1], self.__class__.TIMEOUT)
         except InterruptedError as error:
             self.__stop()
 
             raise error
+
+        if signal_info is None:
+            self.__stop()
+
+            raise RuntimeError(
+                'Error during updating display: '
+                'display did not respond in {} seconds.'.format(
+                    self.__class__.TIMEOUT
+                )
+            )
 
     @classmethod
     def clear(cls, vcom: float) -> None:
