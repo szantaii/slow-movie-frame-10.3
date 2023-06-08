@@ -37,9 +37,13 @@ class SlowMoviePlayer:
                 #       .convert_to_bgr()
                 #       .save_to_bmp(image_file_name))
 
-                (image.resize_keeping_aspect_ratio(self.__config.screen_width, self.__config.screen_height)
+                # (image.resize_keeping_aspect_ratio(self.__config.screen_width, self.__config.screen_height)
+                #       .apply_4bpp_floyd_steinberg_dithering(self.__config.grayscale_method)
+                #       .add_padding(self.__config.screen_width, self.__config.screen_height)
+                #       .save_to_custom_4bpp_image(image_file_name))
+
+                (image.zoom(self.__config.screen_width, self.__config.screen_height)
                       .apply_4bpp_floyd_steinberg_dithering(self.__config.grayscale_method)
-                      .add_padding(self.__config.screen_width, self.__config.screen_height)
                       .save_to_custom_4bpp_image(image_file_name))
 
                 display.update()

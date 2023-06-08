@@ -2,6 +2,7 @@ from __future__ import annotations
 from grayscalemethod import GrayscaleMethod
 import cv2
 import numpy
+from math import ceil
 import subprocess
 import os
 import tempfile
@@ -30,12 +31,18 @@ class Image:
     def resize_keeping_aspect_ratio(self, max_width: int, max_height: int) -> Image:
         height, width = self.__image.shape[:2]
 
-        if width / height <= max_width / max_height:
-            new_width = int(width * (max_height / height))
-            new_height = max_height
-        else:
+        if height == max_height and width == max_width:
+            return self
+
+        new_width = ceil(width * (max_height / height))
+        new_height = max_height
+
+        if width / height > max_width / max_height:
             new_width = max_width
-            new_height = int(height * (max_width / width))
+            new_height = ceil(height * (max_width / width))
+
+        new_width = max_width if new_width > max_width else new_width
+        new_height = max_height if new_height > max_height else new_height
 
         # From OpenCV documentation:
         #
@@ -49,6 +56,28 @@ class Image:
             interpolation = cv2.INTER_CUBIC
 
         self.__image = cv2.resize(self.__image, (new_width, new_height), interpolation=interpolation)
+
+        return self
+
+    def zoom(self, width: int, height: int) -> Image:
+        original_height, original_width = self.__image.shape[:2]
+
+        if original_width == width and original_height == height:
+            return self
+
+        new_width = width
+        new_height = ceil(original_height * (width / original_width))
+
+        if original_width / original_height > width / height:
+            new_width = ceil(original_width * (height / original_height))
+            new_height = height
+
+        self.resize_keeping_aspect_ratio(new_width, new_height)
+
+        x_offset = abs(new_width - width) // 2
+        y_offset = abs(new_height - height) // 2
+
+        self.__image = self.__image[y_offset:y_offset + height, x_offset:x_offset + width]
 
         return self
 
