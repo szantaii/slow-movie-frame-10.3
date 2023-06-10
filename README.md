@@ -227,21 +227,21 @@ See the following examples for different playback durations with different `fram
 
 #### Example #1
 
-Take a video with a 24 frames per second frame rate and with a 90 minute duration, `frame_skip` set to 1 with [`refresh_timeout`](#refresh_timeout) set to 300.0 seconds (5 minutes).
+Take a video with a 24 frames per second frame rate and with a 90 minute duration, `frame_skip` set to 1 with [`refresh_timeout`](#refresh_timeout) set to 180.0 seconds (3 minutes).
 
-In this case, the playback would roughly take up 90 × 60 × 24 × 300.0 seconds, or 450 days, or 1 year, 12 weeks and 1 day.
+In this case, the playback would roughly take up 90 × 60 × 24 × 180.0 seconds, or 270 days, or 38 weeks and 4 days.
 
 #### Example #2
 
 Take the same video and `refresh_timeout` setting as in [Example #1](#example-1), but set `frame_skip` to 3.
 
-In this case the playback would take up (90 × 60 × 24) / 3 × 300.0 seconds which is only 150 days, or 21 weeks and 3 days.
+In this case the playback would take up (90 × 60 × 24) / 3 × 180.0 seconds which is only 90 days, or 12 weeks and 6 days.
 
 #### Example #3
 
-Take a 45 minute video with a 48 frames per second frame rate and another 45 minute long video with a 29.97 frames per second frame rate, [`refresh_timeout`](#refresh_timeout) set to 300.0 seconds (5 minutes) and `time_skip` set to 100.0 milliseconds.
+Take a 45 minute video with a 48 frames per second frame rate and another 45 minute long video with a 29.97 frames per second frame rate, [`refresh_timeout`](#refresh_timeout) set to 180.0 seconds (3 minutes) and `time_skip` set to 100.0 milliseconds.
 
-In this case the total playback time of the two videos would take (45 + 45) × 60 × (1000 / 100.0) × 300.0 seconds, which is 26 weeks, 5 days and 12 hours.
+In this case the total playback time of the two videos would take (45 + 45) × 60 × (1000 / 100.0) × 180.0 seconds, which is 112 days and 12 hours, or 16 weeks and 12 hours.
 
 Also note that the frame rate of the videos did not affect the total playback time in this case.
 
@@ -399,4 +399,4 @@ To run the tests for the Slow Movie Player Service run the following Python scri
 [waveshare-10.3-inch-16-gray-scale-color-epaper-device-wiki]: https://www.waveshare.com/wiki/10.3inch_e-Paper_HAT
 [raspberry-pi-zero-2-w]: https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/
 [raspberry-pi-os]: https://www.raspberrypi.com/software/
-[nagy-sandor-kepkeretezo-muhely-es-muveszbolt]: http://nskeret.hu/
+[nagy-sandor-kepkeretezo-muhely-es-muveszbolt]: https://nskeret.hu/
